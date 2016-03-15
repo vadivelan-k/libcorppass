@@ -9,15 +9,7 @@ module CorpPass
 
       def sso_idp_initiated_url
         uri = URI(sso_url)
-        params = URI.decode_www_form(uri.query.nil? ? '' : uri.query)
-        params << %w(RequestBinding HTTPArtifact)
-        params << %w(ResponseBinding HTTPArtifact)
-        params << ['PartnerId', configuration.sp_entity]
-        params << ['Target', configuration.sso_target]
-        params << %w(NameIdFormat Email)
-        params << ['esrvcId', configuration.eservice_id]
-        # params << %w(param1 NULL)
-        # params << %w(param2 NULL)
+        params = sso_idp_initiated_url_params(uri)
         uri.query = URI.encode_www_form(params)
         notify(CorpPass::Events::SSO_IDP_INITIATED_URL, uri.to_s)
       end
@@ -57,6 +49,21 @@ module CorpPass
       end
 
       private
+
+      def sso_idp_initiated_url_params(uri)
+        params = URI.decode_www_form(uri.query.nil? ? '' : uri.query)
+        params.concat([
+                        %w(RequestBinding HTTPArtifact),
+                        %w(ResponseBinding HTTPArtifact),
+                        ['PartnerId', configuration.sp_entity],
+                        ['Target', configuration.sso_target],
+                        %w(NameIdFormat Email),
+                        ['esrvcId', configuration.eservice_id]
+                      ])
+        # params << %w(param1 NULL)
+        # params << %w(param2 NULL)
+        params
+      end
 
       # Binding can be :redirect or :soap
       def make_sp_initiated_slo_request(name_id, binding: :redirect)
