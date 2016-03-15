@@ -25,8 +25,8 @@ module CorpPass
   end
 
   def self.load_yaml(file, environment)
-    yaml = YAML.load(ERB.new(File.read(file)).result)
-    config = yaml.key?(environment) ? yaml[environment] : yaml['default']
+    yaml = read_yaml(file)
+    config = yaml[environment] || yaml['default']
     fail 'Invalid CorpPass configuration file' unless config
 
     config.keys.each do |key|
@@ -39,6 +39,11 @@ module CorpPass
     end
     yield configuration if block_given?
   end
+
+  def self.read_yaml(file)
+    YAML.load(ERB.new(File.read(file)).result)
+  end
+  private_class_method :read_yaml
 
   def self.configure
     yield configuration

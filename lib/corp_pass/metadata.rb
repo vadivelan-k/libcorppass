@@ -4,6 +4,7 @@ require 'openssl'
 require 'libsaml'
 
 module CorpPass
+  # TODO: Write tests
   module Metadata
     XPATH_SIG_CERT_ELEMENT = '//ds:Signature//ds:X509Certificate'.freeze
     XPATH_CERT_ELEMENT = '//md:KeyDescriptor[@use="%s"]//ds:X509Certificate'.freeze
@@ -14,12 +15,8 @@ module CorpPass
     def self.generate(args)
       unsigned = template
 
-      populate_key_descriptor_certificate!(unsigned, 'signing', args[:signing_crt])
-      populate_key_descriptor_certificate!(unsigned, 'encryption', args[:encryption_crt])
-
-      populate_attribute!(unsigned, XPATH_ENTITY_ID, args[:entity_id])
-      populate_attribute!(unsigned, XPATH_ACS_LOCATION, args[:acs])
-      populate_attribute!(unsigned, XPATH_SLO_LOCATION, args[:slo])
+      populate_certificates!(args, unsigned)
+      populate_attributes!(args, unsigned)
 
       populate_signature_certificate!(unsigned, args[:signing_crt])
       signed = sign_document(unsigned, args[:signing_key])
@@ -28,6 +25,17 @@ module CorpPass
       validate_metadata(signed)
 
       write_xml(signed, args[:out_file])
+    end
+
+    def self.populate_attributes!(args, unsigned)
+      populate_attribute!(unsigned, XPATH_ENTITY_ID, args[:entity_id])
+      populate_attribute!(unsigned, XPATH_ACS_LOCATION, args[:acs])
+      populate_attribute!(unsigned, XPATH_SLO_LOCATION, args[:slo])
+    end
+
+    def self.populate_certificates!(args, unsigned)
+      populate_key_descriptor_certificate!(unsigned, 'signing', args[:signing_crt])
+      populate_key_descriptor_certificate!(unsigned, 'encryption', args[:encryption_crt])
     end
 
     def self.template

@@ -78,15 +78,7 @@ module CorpPass
         proxy = env['warden']
         result = options[:result] || proxy.result
 
-        ret = case result
-              when :redirect
-                body = proxy.message || "You are being redirected to #{proxy.headers['Location']}"
-                [proxy.status, proxy.headers, [body]]
-              when :custom
-                proxy.custom_response
-              else
-                run_failure_app(env, options)
-              end
+        ret = build_response(env, options, proxy, result)
 
         # ensure that the controller response is set up. In production, this is
         # not necessary since warden returns the results to rack. However, at
@@ -94,14 +86,30 @@ module CorpPass
         # framework to verify what would be returned to rack.
         if ret.is_a?(Array)
           # ensure the controller response is set to our response.
-          @controller.response ||= @response
-          @response.status = ret.first
-          @response.headers.clear
-          ret.second.each { |k, v| @response[k] = v }
-          @response.body = ret.third
+          setup_controller_response(ret)
         end
 
         ret
+      end
+
+      def setup_controller_response(ret)
+        @controller.response ||= @response
+        @response.status = ret.first
+        @response.headers.clear
+        ret.second.each { |k, v| @response[k] = v }
+        @response.body = ret.third
+      end
+
+      def build_response(env, options, proxy, result)
+        case result
+        when :redirect
+          body = proxy.message || "You are being redirected to #{proxy.headers['Location']}"
+          [proxy.status, proxy.headers, [body]]
+        when :custom
+          proxy.custom_response
+        else
+          run_failure_app(env, options)
+        end
       end
 
       def run_failure_app(env, options)
@@ -109,14 +117,18 @@ module CorpPass
         env['warden.options'] = options
         Warden::Manager._run_callbacks(:before_failure, env, options)
 
-        failure_app = CorpPass.configuration.failure_app.constantize
-        failure_action = CorpPass.configuration.failure_action.to_sym
-        status, headers, response = failure_app.send(failure_action, env).to_a
+        status, headers, response = execute_failure_app(env)
         @controller.response.headers.merge!(headers)
         r_opts = { status: status, content_type: headers['Content-Type'], location: headers['Location'] }
         r_opts[Rails.version.start_with?('5') ? :body : :text] = response.body
         @controller.send :render, r_opts
         nil # causes process return @response
+      end
+
+      def execute_failure_app(env)
+        failure_app = CorpPass.configuration.failure_app.constantize
+        failure_action = CorpPass.configuration.failure_action.to_sym
+        failure_app.send(failure_action, env).to_a
       end
     end
   end
