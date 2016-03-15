@@ -14,14 +14,8 @@ API Documentation (TODO)
 2. Run `bundle`
 
 # Usage
-language: ruby
-rvm:
-  - 2.2
-before_script:
-  - "bundle exec rake db:migrate RAILS_ENV=test"
-script: bundle exec rake test
-install: bundle install --jobs=3 --retry=3
-TODO: Initialisation, integration, examples 
+
+TODO: Initialisation, integration, examples
 
 # License
 
