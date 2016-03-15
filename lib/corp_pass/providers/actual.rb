@@ -159,7 +159,8 @@ module CorpPass
       NETWORK_EXCEPTIONS = [::Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
                             Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].freeze
 
-      def resolve_artifact!(request, retrying_attempt = false)
+      # This method is concerned with rescuing from various exceptions thus, disabling AbcSize
+      def resolve_artifact!(request, retrying_attempt = false) # rubocop:disable Metrics/AbcSize
         response = Saml::Bindings::HTTPArtifact.resolve(request, artifact_resolution_url, {}, proxy)
         check_response!(response)
       rescue *NETWORK_EXCEPTIONS => e
