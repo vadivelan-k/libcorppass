@@ -59,20 +59,19 @@ module CorpPass
     setup_provider!
   end
 
-  def self.setup_warden_manager!(manager)
-    fail "Manager provided #{manager.class} does not inherit Warden::Manager" unless manager.class < Warden::Manager
+  def self.setup_warden_manager!(config)
+    config_class = config.class
+    fail "Config provided #{config_class} does not inherit Warden::Config" unless config_class <= Warden::Config
     default_provider = DEFAULT_PROVIDER.new
     strategy_name = default_provider.warden_strategy_name
     Warden::Strategies.add(strategy_name, default_provider.warden_strategy)
 
-    failure_app = configuration.failure_app.constantize
-
-    manager.failure_app = failure_app
-    manager.default_scope = CorpPass::WARDEN_SCOPE
-    manager.scope_defaults CorpPass::WARDEN_SCOPE,
-                           { store: true,
-                             strategies: [strategy_name],
-                             action: configuration.failure_action }.compact!
+    config.failure_app = configuration.failure_app.constantize
+    config.default_scope = CorpPass::WARDEN_SCOPE
+    config.scope_defaults CorpPass::WARDEN_SCOPE,
+                          { store: true,
+                            strategies: [strategy_name],
+                            action: configuration.failure_action }.compact!
   end
 
   # Clears the current provider and makes a new one

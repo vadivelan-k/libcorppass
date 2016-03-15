@@ -78,8 +78,8 @@ RSpec.configure do |config|
     Rack::Builder.new do
       use Rack::Session::Cookie, secret: 'foobar'
 
-      use Warden::Manager do |manager|
-        CorpPass.setup_warden_manager!(manager)
+      use Warden::Manager do |warden_config|
+        CorpPass.setup_warden_manager!(warden_config)
       end
 
       run Warden::Test::Mock
