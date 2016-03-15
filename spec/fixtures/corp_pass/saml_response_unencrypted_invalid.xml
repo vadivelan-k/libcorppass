@@ -1,0 +1,47 @@
+<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID=""
+                Version="2.0" IssueInstant="2015-11-30T04:42:31Z"
+                Destination="https://sp.example.com/saml/foobar">
+  <saml:Issuer>https://idp.example.com/saml2/idp/foobar</saml:Issuer>
+  <samlp:Status>
+    <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Requester">
+      <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:RequestDenied"/>
+    </samlp:StatusCode>
+
+  </samlp:Status>
+  <saml:Assertion ID="_9360bcc63fb19b235204b5d87cd65c0b62bb1efe92" Version="2.0" IssueInstant="2015-11-30T04:42:31Z">
+    <saml:Issuer>https://idp.example.com/saml2/idp/foobar</saml:Issuer>
+    <saml:Subject>
+      <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">foobar</saml:NameID>
+      <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:invalid">
+        <saml:SubjectConfirmationData NotOnOrAfter="2015-11-30T04:47:31Z"
+                                      Recipient="https://sp.example.com/saml/acs"/>
+      </saml:SubjectConfirmation>
+      <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+        <saml:SubjectConfirmationData NotOnOrAfter="2015-11-30T04:47:31Z"
+                                      Recipient="https://sp.example.com/saml/invalid"/>
+      </saml:SubjectConfirmation>
+      <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+        <saml:SubjectConfirmationData NotOnOrAfter="2010-11-30T04:47:31Z"
+                                      Recipient="https://sp.example.com/saml/acs"/>
+      </saml:SubjectConfirmation>
+    </saml:Subject>
+    <saml:Conditions NotBefore="2099-11-30T04:42:01Z" NotOnOrAfter="2099-11-30T04:47:31Z">
+      <saml:AudienceRestriction>
+        <saml:Audience>https://sp.example.com/saml/foobar</saml:Audience>
+      </saml:AudienceRestriction>
+    </saml:Conditions>
+    <saml:AuthnStatement AuthnInstant="2015-11-30T04:24:47Z" SessionIndex="_c2f870e99df1b3d7c439defffa8bb5dfb56a5579a4">
+      <saml:AuthnContext>
+        <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:Password</saml:AuthnContextClassRef>
+      </saml:AuthnContext>
+    </saml:AuthnStatement>
+    <saml:AttributeStatement>
+      <saml:Attribute Name="AuthAccess" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+        <saml:AttributeValue xsi:type="xs:string">PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxBdXRoQWNjZXNzPg0KICA8Q1BJRD5mb29iYXI8L0NQSUQ+DQogIDxDUEFjY1R5cGU+VXNlcjwvQ1BBY2NUeXBlPg0KICA8Q1BVSUQ+UzEyMzQ1NjdBPC9DUFVJRD4NCiAgPENQVUlEX0NvdW50cnk+U0c8L0NQVUlEX0NvdW50cnk+DQogIDxDUFVJRF9EQVRFPjIwMTEtMDEtMTU8L0NQVUlEX0RBVEU+DQogIDxDUEVudElEPjIwMTAwMDc1OFI8L0NQRW50SUQ+DQogIDxDUEVudF9TdGF0dXM+QWN0aXZlPC9DUEVudF9TdGF0dXM+DQogIDxDUEVudF9UWVBFPlVFTjwvQ1BFbnRfVFlQRT4NCiAgPElTU1BIT0xERVI+WUVTPC9JU1NQSE9MREVSPg0KICA8UmVzdWx0X1NldD4NCiAgICA8RVNydmNfUm93X0NvdW50PjE8L0VTcnZjX1Jvd19Db3VudD4NCiAgICA8RVNydmNfUmVzdWx0Pg0KICAgICAgPENQRVNydmNJRD5NVEktQkdQPC9DUEVTcnZjSUQ+DQogICAgICA8QXV0aF9SZXN1bHRfU2V0Pg0KICAgICAgICA8Um93X0NvdW50PjE8L1Jvd19Db3VudD4NCiAgICAgICAgPFJvdz4NCiAgICAgICAgICA8Q1BSb2xlPkJHUF9BUFBST1ZFPC9DUFJvbGU+DQogICAgICAgICAgPFN0YXJ0RGF0ZT4yMDE2LTAxLTE1PC9TdGFydERhdGU+DQogICAgICAgICAgPEVuZERhdGU+MjAxNi0wMi0xNTwvRW5kRGF0ZT4NCiAgICAgICAgPC9Sb3c+DQogICAgICA8L0F1dGhfUmVzdWx0X1NldD4NCiAgICA8L0VTcnZjX1Jlc3VsdD4NCiAgPC9SZXN1bHRfU2V0Pg0KPC9BdXRoQWNjZXNzPg==</saml:AttributeValue>
+      </saml:Attribute>
+    </saml:AttributeStatement>
+  </saml:Assertion>
+  <saml:Assertion ID="foobar" Version="2.0" IssueInstant="2015-11-30T04:42:31Z" />
+</samlp:Response>

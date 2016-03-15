@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor ID="_052c51476c9560a429e1171e8c9528b96b69fb57"
+                     entityID="https://sp.example.com/saml/metadata"
+                     xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
+  <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <ds:X509Certificate>MIIETTCCAzWgAwIBAgIBATANBgkqhkiG9w0BAQUFADCCARExIjAgBgNVBAMTGVBERCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkxCzAJBgNVBAgTAlNHMQswCQYDVQQGEwJTRzEkMCIGCSqGSIb3DQEJARYVc2FtdWVsX2xvaEBpZGEuZ292LnNnMTQwMgYDVQQKEytJbmZvY29tbSBEZXZlbG9wbWVudCBBdXRob3JpdHkgb2YgU2luZ2Fwb3JlMTEwLwYDVQQLEyhHb3Zlcm5tZW50IENoaWVmIEluZm9ybWF0aW9uIE9mZmljZSBXaW5nMSQwIgYDVQQLExtHb3Zlcm5tZW50IERpZ2l0YWwgU2VydmljZXMxHDAaBgNVBAsTE1Byb2R1Y3QgRGV2ZWxvcG1lbnQwHhcNMTUwNDEyMDMzMzAwWhcNMjAwNDEwMDMzMzAwWjCCAQExEjAQBgNVBAMTCTEwLjAuMTAuMjELMAkGA1UECBMCU0cxCzAJBgNVBAYTAlNHMSQwIgYJKoZIhvcNAQkBFhVzYW11ZWxfbG9oQGlkYS5nb3Yuc2cxNDAyBgNVBAoTK0luZm9jb21tIERldmVsb3BtZW50IEF1dGhvcml0eSBvZiBTaW5nYXBvcmUxMTAvBgNVBAsTKEdvdmVybm1lbnQgQ2hpZWYgSW5mb3JtYXRpb24gT2ZmaWNlIFdpbmcxJDAiBgNVBAsTG0dvdmVybm1lbnQgRGlnaXRhbCBTZXJ2aWNlczEcMBoGA1UECxMTUHJvZHVjdCBEZXZlbG9wbWVudDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAkzJPv0qqzd8UOtLJx9sX5vCVm9zop7BpxucEk9MS5EhMnwhxSzJo2UAyykq1zYOeMv77jOONg3cfQHWk2lzslH6liZxGnDHxx1mrfwfVLWcMcua963d6/gdvWMd0OJy0bCvkHyjcNjkREZ5/ZH/gR15I21ThXe+Q3M4eLloyjF0CAwEAAaNAMD4wCQYDVR0TBAIwADALBgNVHQ8EBAMCBeAwJAYDVR0RBB0wG4IJMTAuMC4xMC4ygg5zcC5pZGEtZ2RzLmNvbTANBgkqhkiG9w0BAQUFAAOCAQEACbWd0YNCRX7ZVqW9dONhWuKIaoie7SUJCHQuTSMjhlnqPv+LtpjCofoHCUyImGbaFf7z+FhHQjYE8QOvyLACmDd9ese7LZ1Sjw9QEAvayDiX45IdvnAwl0NOb8a9Oge4ibhl7NYnUua018hLW/oUWfRt9PksJ1ns7asNRDU5fBDUyL0DuyYgZ7NiBb73IrZuiS83VdIcang4nGreFzZbbJy5YnMwwid7wjfI+mIeOZKjJJ4ChdnlXSwTpNXRPBenqF+/zB90hfztcfMz5ztGekn0QYnVJPnUkcR0KrgGvH4fRQCNSU8Zv3xOKB1CY81/uL7IRJMO+bFd4qOUY4Hy1A==</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:AssertionConsumerService
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Post"
+            Location="https://sp.example.com/saml/acs" index="0" isDefault="true"/>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                            Location="https://sp.example.com/saml/slo"
+                            index="0" />
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+                            Location="https://sp.example.com/saml/slo"
+                            index="1" />
+  </md:SPSSODescriptor>
+</md:EntityDescriptor>

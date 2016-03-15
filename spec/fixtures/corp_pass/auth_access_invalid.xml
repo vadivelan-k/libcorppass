@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AuthAccess>
+  <CPID>cptest4</CPID>
+  <CPAccType>User</CPAccType>
+  <CPUID>F1234567P</CPUID>
+  <CPUID_Country>SG</CPUID_Country>
+  <CPUID_DATE>2011-01-15</CPUID_DATE>
+  <CPEntID>R90SS0001A</CPEntID>
+  <CPEnt_Status>MIA</CPEnt_Status>
+  <CPEnt_TYPE>UEN</CPEnt_TYPE>
+  <ISSPHOLDER>YES</ISSPHOLDER>
+  <Result_Set>
+    <ESrvc_Row_Count>3</ESrvc_Row_Count>
+    <ESrvc_Result>
+      <CPESrvcID>BGESRV1</CPESrvcID>
+      <Auth_Result_Set>
+        <Row_Count>1</Row_Count>
+        <Row>
+          <CPRole>NULL</CPRole>
+          <StartDate>2016-01-15</StartDate>
+          <EndDate>2016-02-15</EndDate>
+        </Row>
+        <Row>
+          <CPRole>NULL</CPRole>
+          <StartDate>2016-03-15</StartDate>
+          <EndDate>2017-04-15</EndDate>
+        </Row>
+      </Auth_Result_Set>
+    </ESrvc_Result>
+  </Result_Set>
+</AuthAccess>

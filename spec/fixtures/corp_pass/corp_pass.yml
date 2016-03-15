@@ -1,0 +1,18 @@
+default: &default
+  metadata_directory: 'spec/fixtures/corp_pass/metadata'
+  encryption_key: 'spec/fixtures/corp_pass/saml_key.pem'
+  signing_key: 'spec/fixtures/corp_pass/saml_key.pem'
+  idp_entity: 'https://idp.example.com/saml2/idp/metadata'
+  sp_entity: 'https://sp.example.com/saml/metadata'
+  artifact_resolution_service_url_index: 0
+  failure_app: 'Warden::Test::Mock'
+  provider: 'CorpPass::Providers::Actual'
+  timeout: 1800
+  eservice_id: 'Foobar'
+  slo_enabled: true
+  sso_idp_initiated_base_url: 'https://sp.example.com/saml/sso'
+
+test:
+  <<: *default
+  idp_entity: "https://idp.example.com"
+  sp_entity: "https://sp.example.com"
