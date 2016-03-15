@@ -76,23 +76,12 @@ RSpec.configure do |config|
   config.before(:suite) do
     CorpPass::Test::Config.reset_configuration!
     CorpPass.setup!
-    default_provider = CorpPass::DEFAULT_PROVIDER.new
-    strategy_name = default_provider.warden_strategy_name
-    Warden::Strategies.add(strategy_name, default_provider.warden_strategy)
-
-    failure_app = CorpPass.configuration.failure_app.constantize
 
     Rack::Builder.new do
       use Rack::Session::Cookie, secret: 'foobar'
 
       use Warden::Manager do |manager|
-        manager.failure_app = failure_app
-
-        manager.default_scope = CorpPass::WARDEN_SCOPE
-        manager.scope_defaults CorpPass::WARDEN_SCOPE,
-                               { store: true,
-                                 strategies: [strategy_name],
-                                 action: configuration.failure_action }.compact!
+        CorpPass.setup_warden_manager!(manager)
       end
 
       run Warden::Test::Mock

@@ -50,9 +50,23 @@ module CorpPass
     @setup = true
 
     setup_libsaml
-    setup_warden
     CorpPass::Timeout.setup_warden_timeout
     setup_provider!
+  end
+
+  def setup_warden_manager!(manager)
+    default_provider = DEFAULT_PROVIDER.new
+    strategy_name = default_provider.warden_strategy_name
+    Warden::Strategies.add(strategy_name, default_provider.warden_strategy)
+
+    failure_app = configuration.failure_app.constantize
+
+    manager.failure_app = failure_app
+    manager.default_scope = CorpPass::WARDEN_SCOPE
+    manager.scope_defaults CorpPass::WARDEN_SCOPE,
+                           { store: true,
+                             strategies: [strategy_name],
+                             action: configuration.failure_action }.compact!
   end
 
   # Clears the current provider and makes a new one
@@ -129,23 +143,4 @@ module CorpPass
     end
   end
   private_class_method :setup_libsaml
-
-  def self.setup_warden
-    # default_provider = DEFAULT_PROVIDER.new
-    # strategy_name = default_provider.warden_strategy_name
-    # Warden::Strategies.add(strategy_name, default_provider.warden_strategy)
-    #
-    # failure_app = configuration.failure_app.constantize
-    #
-    # Rails.configuration.middleware.use RailsWarden::Manager do |manager|
-    #   manager.failure_app = failure_app
-    #
-    #   manager.default_scope = CorpPass::WARDEN_SCOPE
-    #   manager.scope_defaults CorpPass::WARDEN_SCOPE,
-    #                          { store: true,
-    #                            strategies: [strategy_name],
-    #                            action: configuration.failure_action }.compact!
-    # end
-  end
-  private_class_method :setup_warden
 end
