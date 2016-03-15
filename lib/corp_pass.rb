@@ -71,7 +71,7 @@ module CorpPass
     config.scope_defaults CorpPass::WARDEN_SCOPE,
                           { store: true,
                             strategies: [strategy_name],
-                            action: configuration.failure_action }.compact!
+                            action: configuration.failure_action }.compact
   end
 
   # Clears the current provider and makes a new one
