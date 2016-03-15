@@ -25,10 +25,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.4.0'
   spec.add_development_dependency 'factory_girl', '~> 4.5.0'
   spec.add_development_dependency 'webmock', '~> 1.24'
-  spec.add_development_dependency 'actionpack', '~> 4.2', '>= 4.2.6'
+  spec.add_development_dependency 'actionpack', '~> 4.2'
   spec.add_development_dependency 'timecop', '~> 0.8'
 
-  spec.add_dependency 'activesupport', '~> 4.2', '>= 4.2.6'
+  spec.add_dependency 'activesupport', '~> 4.2'
   spec.add_dependency 'libsaml', '~> 2.20', '>= 2.20.4'
   spec.add_dependency 'warden', '~> 1.2', '>= 1.2.6'
 end
