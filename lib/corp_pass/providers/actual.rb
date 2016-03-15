@@ -45,7 +45,7 @@ module CorpPass
       end
 
       def warden_strategy
-        ActualStrategy
+        CorpPass::Providers::ActualStrategy
       end
 
       private
@@ -123,7 +123,7 @@ module CorpPass
 
       def valid?
         notify(CorpPass::Events::STRATEGY_VALID,
-               super && !warden.authenticated?(CorpPass::WARDEN_SCOPE) && params['SAMLart'])
+               super && !warden.authenticated?(CorpPass::WARDEN_SCOPE) && !params['SAMLart'].blank?)
       end
 
       def authenticate!
