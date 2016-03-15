@@ -6,8 +6,6 @@ require 'corp_pass'
 require 'corp_pass/test/controller_helpers'
 require 'corp_pass/support/config'
 
-require 'byebug'
-
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
