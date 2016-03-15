@@ -82,7 +82,7 @@ module CorpPass
     end
 
     def xsd
-      Nokogiri::XML::Schema(File.read('lib/corp_pass/AuthAccess.xsd'))
+      Nokogiri::XML::Schema(File.read(File.dirname(__FILE__) + '/AuthAccess.xsd'))
     end
 
     def valid_root?
