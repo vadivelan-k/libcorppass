@@ -60,7 +60,7 @@ module CorpPass
   end
 
   def self.setup_warden_manager!(manager)
-    fail "Manager provided #{manager.class} does not inherit Warden::Manager" unless manager < Warden::Manager
+    fail "Manager provided #{manager.class} does not inherit Warden::Manager" unless manager.class < Warden::Manager
     default_provider = DEFAULT_PROVIDER.new
     strategy_name = default_provider.warden_strategy_name
     Warden::Strategies.add(strategy_name, default_provider.warden_strategy)
