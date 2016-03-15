@@ -1,4 +1,3 @@
-# coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'corp_pass/version'
@@ -21,7 +20,6 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>=2.2.0'
 
-  spec.add_development_dependency 'bundler', '~> 1.11'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rubocop', '~> 0.38.0'
   spec.add_development_dependency 'rspec', '~> 3.4.0'
@@ -29,7 +27,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'webmock', '~> 1.24'
   spec.add_development_dependency 'actionpack', '~> 4.2', '>= 4.2.6'
   spec.add_development_dependency 'timecop', '~> 0.8'
-  spec.add_development_dependency 'byebug'
 
   spec.add_dependency 'activesupport', '~> 4.2', '>= 4.2.6'
   spec.add_dependency 'libsaml', '~> 2.20', '>= 2.20.4'
