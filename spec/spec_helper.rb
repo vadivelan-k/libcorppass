@@ -2,6 +2,10 @@ require 'factory_girl'
 require 'warden/test/mock'
 require 'rack'
 require 'webmock/rspec'
+
+require 'simplecov'
+SimpleCov.start
+
 require 'corp_pass'
 require 'corp_pass/support/rack_helper'
 require 'corp_pass/support/config'
