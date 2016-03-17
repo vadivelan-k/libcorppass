@@ -91,6 +91,10 @@ RSpec.describe CorpPass::Timeout do
       CorpPass.configuration.session_max_lifetime = 12
     end
 
+    after(:each) do
+      Warden.test_reset!
+    end
+
     after(:all) do
       Timecop.return
       CorpPass::Test::Config.reset_configuration!
