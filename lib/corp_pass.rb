@@ -19,6 +19,8 @@ module CorpPass
 
   WARDEN_SCOPE = :corp_pass
   DEFAULT_PROVIDER = CorpPass::Providers::Actual
+  DEFAULT_STRATEGY_NAME = :corp_pass_actual
+  DEFAULT_STRATEGY = CorpPass::Providers::ActualStrategy
 
   def self.configuration
     @configuration ||= CorpPass::Config.new
@@ -55,6 +57,7 @@ module CorpPass
     @setup = true
 
     setup_libsaml
+    setup_default_strategy
     CorpPass::Timeout.setup_warden_timeout
     setup_provider!
   end
@@ -62,15 +65,12 @@ module CorpPass
   def self.setup_warden_manager!(config)
     config_class = config.class
     fail "Config provided #{config_class} does not inherit Warden::Config" unless config_class <= Warden::Config
-    default_provider = DEFAULT_PROVIDER.new
-    strategy_name = default_provider.warden_strategy_name
-    Warden::Strategies.add(strategy_name, default_provider.warden_strategy)
 
-    config.failure_app = configuration.failure_app.constantize
+    config.failure_app = configuration.failure_app.try(:constantize) || configuration.failure_app
     config.default_scope = CorpPass::WARDEN_SCOPE
     config.scope_defaults CorpPass::WARDEN_SCOPE,
                           { store: true,
-                            strategies: [strategy_name],
+                            strategies: [DEFAULT_STRATEGY_NAME],
                             action: configuration.failure_action }.compact
   end
 
@@ -148,4 +148,9 @@ module CorpPass
     end
   end
   private_class_method :setup_libsaml
+
+  def self.setup_default_strategy
+    Warden::Strategies.add(DEFAULT_STRATEGY_NAME, DEFAULT_STRATEGY)
+  end
+  private_class_method :setup_default_strategy
 end

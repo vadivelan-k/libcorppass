@@ -23,9 +23,9 @@ module CorpPass
     # def skip_timeout_refresh
     #   CorpPass::Timeout.skip_timeout_refresh(request)
     # end
-    def self.skip_timeout_refresh(request)
+    def self.skip_timeout_refresh(env)
       notify(CorpPass::Events::SKIP_TIMEOUT_REFRESH, 'Last request touching skipped')
-      request.env[SKIP_TIMEOUT_REFRESH] = true
+      env[SKIP_TIMEOUT_REFRESH] = true
     end
 
     def self.last_request(warden)

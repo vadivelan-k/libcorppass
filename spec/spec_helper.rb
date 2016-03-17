@@ -3,7 +3,7 @@ require 'warden/test/mock'
 require 'rack'
 require 'webmock/rspec'
 require 'corp_pass'
-require 'corp_pass/test/controller_helpers'
+require 'corp_pass/support/rack_helper'
 require 'corp_pass/support/config'
 
 RSpec.configure do |config|
@@ -74,28 +74,5 @@ RSpec.configure do |config|
   config.before(:suite) do
     CorpPass::Test::Config.reset_configuration!
     CorpPass.setup!
-
-    Rack::Builder.new do
-      use Rack::Session::Cookie, secret: 'foobar'
-
-      use Warden::Manager do |warden_config|
-        CorpPass.setup_warden_manager!(warden_config)
-      end
-
-      run Warden::Test::Mock
-    end
-  end
-
-  config.include(CorpPass::Test::ControllerHelpers, type: :controller)
-  config.after(:each, type: :controller) do
-    Warden.test_reset!
-  end
-  config.include(Warden::Test::Helpers, type: :feature)
-  config.after(:each, type: :feature) do
-    Warden.test_reset!
-  end
-  config.include(Warden::Test::Helpers, type: :request)
-  config.after(:each, type: :request) do
-    Warden.test_reset!
   end
 end
