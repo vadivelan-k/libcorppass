@@ -5,7 +5,6 @@ default: &default
   idp_entity: 'https://idp.example.com/saml2/idp/metadata'
   sp_entity: 'https://sp.example.com/saml/metadata'
   artifact_resolution_service_url_index: 0
-  failure_app: 'Warden::Test::Mock'
   provider: 'CorpPass::Providers::Actual'
   timeout: 1800
   eservice_id: 'Foobar'
