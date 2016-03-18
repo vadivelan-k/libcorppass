@@ -208,7 +208,7 @@ RSpec.describe CorpPass::Providers::Actual do
         expected = {
           type: :exception,
           scope: :corp_pass,
-          exception: TimeoutError.new(exception_message)
+          exception: ::Timeout::Error.new(exception_message)
         }
         expect(subject.test_authentication!).to eq(expected.to_s + "\nException: #{exception_message}")
       end
