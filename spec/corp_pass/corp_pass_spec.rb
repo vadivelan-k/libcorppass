@@ -13,7 +13,7 @@ RSpec.describe CorpPass do
 
     it { expect { |b| CorpPass.configure!(&b) }.to yield_with_args(CorpPass::Config) }
 
-    it 'configure!! creates a new configuration object after each configuration operation' do
+    it 'configure! creates a new configuration object after each configuration operation' do
       original = CorpPass.configuration
       CorpPass.configure! { |_config| }
       expect(CorpPass.configuration).to_not be original
@@ -26,7 +26,7 @@ RSpec.describe CorpPass do
       expect(CorpPass.configuration.slo_enabled).to be true
     end
 
-    it 'load_yaml!yields configuration when a block is provided' do
+    it 'load_yaml! yields configuration when a block is provided' do
       expect { |b| CorpPass.load_yaml!(yaml_file, 'test', &b) }
         .to yield_with_args(CorpPass::Config)
     end
@@ -109,10 +109,6 @@ RSpec.describe CorpPass do
 
     after(:each) do
       Warden.test_reset!
-    end
-
-    after(:all) do
-      Timecop.return
     end
 
     it 'serializes and deserializes an object exactly' do
