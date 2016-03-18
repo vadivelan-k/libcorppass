@@ -5,8 +5,6 @@ require 'corp_pass/response'
 module CorpPass
   module Providers
     class Actual < Base
-      include CorpPass::Notification
-
       def sso_idp_initiated_url
         uri = URI(sso_url)
         params = sso_idp_initiated_url_params(uri)

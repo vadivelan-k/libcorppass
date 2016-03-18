@@ -5,6 +5,8 @@ require 'corp_pass/notification'
 module CorpPass
   module Providers
     class Base
+      include CorpPass::Notification
+
       def initialize
       end
 
