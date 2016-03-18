@@ -1,3 +1,5 @@
+require 'timecop'
+
 RSpec.describe CorpPass::Providers::Actual do
   let(:sp_entity) { 'https://sp.example.com/saml/metadata' }
   let(:idp_entity) { 'https://idp.example.com/saml2/idp/metadata' }
@@ -65,7 +67,10 @@ RSpec.describe CorpPass::Providers::Actual do
       end
 
       it 'creates the right IDP Initiated response' do
-        request = Saml::LogoutRequest.parse(File.read('spec/fixtures/corp_pass/logout_request.xml'))
+        destination = Saml.provider(sp_entity).single_logout_service_url(Saml::ProtocolBinding::HTTP_REDIRECT)
+        request = Saml::LogoutRequest.new(name_id: 'S1234567A',
+                                          destination: destination,
+                                          issuer: idp_entity)
         _, slo_response = subject.slo_response_redirect request
         expect(slo_response.in_response_to).to eq(request._id)
       end
