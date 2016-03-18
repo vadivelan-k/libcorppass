@@ -28,18 +28,6 @@ module CorpPass
         idp.artifact_resolution_service_url(configuration.artifact_resolution_service_url_index)
       end
 
-      def parse_logout_response(request)
-        message = Saml::Bindings::HTTPRedirect.receive_message(request, type: :logout_response)
-        notify(CorpPass::Events::SLO_RESPONSE, message.to_xml)
-        message
-      end
-
-      def parse_logout_request(request)
-        message = Saml::Bindings::HTTPRedirect.receive_message(request, type: :logout_request)
-        notify(CorpPass::Events::SLO_REQUEST, message.to_xml)
-        message
-      end
-
       def warden_strategy_name
         :corp_pass_actual
       end

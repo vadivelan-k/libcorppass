@@ -120,8 +120,8 @@ module CorpPass
     provider.parse_logout_request request
   end
 
-  def self.logout(request)
-    provider.logout(request)
+  def self.logout(warden)
+    provider.logout(warden)
   end
 
   def self.make_provider

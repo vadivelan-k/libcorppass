@@ -50,7 +50,7 @@ module CorpPass
         inactivity_timeout, session_timeout = user_timeout?(env, user, warden)
 
         if inactivity_timeout || session_timeout
-          CorpPass.logout(warden.request)
+          CorpPass.logout(warden)
           CorpPass::Util.throw_warden(:timeout, scope)
         end
 
