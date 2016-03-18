@@ -94,7 +94,7 @@ module CorpPass
   # @example
   #   Rack::Builder.new do
   #     use Rack::Session::Cookie, secret: 'foobar'
-  #     
+  #
   #     use Warden::Manager do |warden_config|
   #       CorpPass.setup_warden_manager!(warden_config)
   #     end

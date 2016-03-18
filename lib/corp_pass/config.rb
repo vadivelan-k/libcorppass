@@ -4,7 +4,7 @@ require 'uri'
 module CorpPass
   # Accessor methods for keys in found in the YAML file loaded during initialisation.
   # @attr provider [String] A String of the provider being used. This string will be constantized.
-  #                         Raises an error if the class is not found or does not inherit from CorpPass::Providers::Base.
+  #   Raises an error if the class is not found or does not inherit from CorpPass::Providers::Base.
   # @attr timeout [Integer] Inactivity timeout in seconds. Defaults to 1800.
   # @attr session_max_lifetime [Integer] Maximum session lifetime. Defaults to 86400.
   # @attr failure_app [Object] A Rack application.

@@ -35,7 +35,8 @@ module CorpPass
       end
 
       # Parse a SAML +<LogoutResponse>+ received via a HTTP Request in response to an SP-initiated SLO.
-      # @param request [Rack::Request] a +Rack::Request+ (or similarly behaved, like +ActionDispatch::Request+ from Rails)
+      # @param request [Rack::Request] a +Rack::Request+
+      #   (or similarly behaved, like +ActionDispatch::Request+ from Rails)
       # @return [Saml::Elements::LogoutResponse]
       def parse_logout_response(request)
         message = Saml::Bindings::HTTPRedirect.receive_message(request, type: :logout_response)
@@ -44,7 +45,8 @@ module CorpPass
       end
 
       # Parse a SAML +<LogoutRequest>+ received via a HTTP Request in response to an IdP-initiated SLO.
-      # @param request [Rack::Request] a +Rack::Request+ (or similarly behaved, like +ActionDispatch::Request+ from Rails)
+      # @param request [Rack::Request] a +Rack::Request+
+      #   (or similarly behaved, like +ActionDispatch::Request+ from Rails)
       # @return [Saml::Elements::LogoutRequest]
       def parse_logout_request(request)
         message = Saml::Bindings::HTTPRedirect.receive_message(request, type: :logout_request)
