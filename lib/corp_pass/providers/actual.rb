@@ -4,7 +4,11 @@ require 'corp_pass/response'
 
 module CorpPass
   module Providers
+    # A concrete implementation of an actual CorpPass provider.
+    #
+    # See: {ActualStrategy}
     class Actual < Base
+      # @return [String] the URL to redirect to for IdP-initiated SSO.
       def sso_idp_initiated_url
         uri = URI(sso_url)
         params = sso_idp_initiated_url_params(uri)
@@ -12,24 +16,36 @@ module CorpPass
         notify(CorpPass::Events::SSO_IDP_INITIATED_URL, uri.to_s)
       end
 
+      # Build a SAML +<LogoutRequest>+ and a redirect URL to initiate a SP-initiated SLO.
+      # @param name_id [String] the +name_id+ being logged out (ie. the +NameID+ from +<Subject>+ in the SAML assertion)
+      # @return [Array<String, Saml::Elements::LogoutRequest>] an array +[url, logout_request]+ where
+      #                                                        +url+ is the URL to redirect to
       def slo_request_redirect(name_id)
         slo_request = make_sp_initiated_slo_request name_id, binding: :redirect
         [Saml::Bindings::HTTPRedirect.create_url(slo_request), slo_request]
       end
 
+      # Build a SAML +<LogoutResponse>+ and a redirect URL in response to an IdP-initiated SLO.
+      #
+      # @param logout_request [Saml::Elements::LogoutRequest] received from the IdP
+      # @return [Array<String, Saml::Elements::LogoutResponse>] an array +[url, logout_response]+ where
+      #                                                         +url+ is the URL to redirect to
       def slo_response_redirect(logout_request)
         slo_response = make_idp_initiated_slo_response logout_request, binding: :redirect
         [Saml::Bindings::HTTPRedirect.create_url(slo_response), slo_response]
       end
 
+      # @return [String]
       def artifact_resolution_url
         idp.artifact_resolution_service_url(configuration.artifact_resolution_service_url_index)
       end
 
+      # @return [Symbol] the symbol of the strategy used by this provider.
       def warden_strategy_name
         :corp_pass_actual
       end
 
+      # @return [Class] the class of the strategy used by this provider.
       def warden_strategy
         CorpPass::Providers::ActualStrategy
       end
@@ -100,9 +116,13 @@ module CorpPass
       end
     end
 
+    # A concrete implementation of {CorpPass::Providers::BaseStrategy} for the actual CorpPass provider.
+    #
+    # See: {CorpPass::Providers::BaseStrategy}, {Actual}
     class ActualStrategy < BaseStrategy
       include CorpPass::Notification
 
+      # @return [String]
       def artifact_resolution_url
         CorpPass.provider.artifact_resolution_url
       end
@@ -112,6 +132,7 @@ module CorpPass
                super && !warden.authenticated?(CorpPass::WARDEN_SCOPE) && !params['SAMLart'].blank?)
       end
 
+      # Authenticates the user against the artifact received in the SAML response.
       def authenticate!
         response = resolve_artifact!(request)
         user = response.cp_user
@@ -149,10 +170,16 @@ module CorpPass
         message.to_s
       end
 
+      # List of network exceptions. Artifact resolution is retried when one of these exceptions is
+      # caught in {#resolve_artifact!}.
       NETWORK_EXCEPTIONS = [::Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
                             Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError].freeze
 
-      # This method is concerned with rescuing from various exceptions thus, disabling AbcSize
+      # Rubocop: This method is concerned with rescuing from various exceptions so AbcSize is disabled
+      #
+      # @param request [Rack::Request] A +Rack::Request+-like object
+      # @param retrying_attempt [Boolean] whether the resolution is a retry attempt. +resolve_artifact!+ will only
+      #                                   retry at most once.
       def resolve_artifact!(request, retrying_attempt = false) # rubocop:disable Metrics/AbcSize
         response = Saml::Bindings::HTTPArtifact.resolve(request, artifact_resolution_url, {}, proxy)
         check_response!(response)
@@ -176,6 +203,9 @@ module CorpPass
         CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
       end
 
+      # Checks whether the SAML artifact response received from IdP is valid and has a successful status code.
+      # Also validates that the response is compliant with the CorpPass specification.
+      # @return [Response] SAML response received from the IdP.
       def check_response!(response)
         unless response.try(:success?)
           raise ArtifactResolutionFailure.new('Artifact resolution failed', # rubocop:disable Style/SignalException
@@ -190,6 +220,8 @@ module CorpPass
         cp_response
       end
 
+      # Returns the proxy configuration for this strategy.
+      # @return [Hash] A Hash with the keys +:addr+ and +:port+.
       def proxy
         return {} if configuration.proxy_address.blank?
         {

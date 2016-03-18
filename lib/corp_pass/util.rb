@@ -1,5 +1,7 @@
 module CorpPass
   module Util
+    # Converts <tt>['true', 'false']</tt> +String+ objects into +Boolean+ objects.
+    # @return [Boolean]
     def self.string_to_boolean(value, true_string: 'true', false_string: 'false')
       return value if [true, false].include? value
       return true if value.casecmp(true_string) == 0
@@ -16,7 +18,7 @@ module CorpPass
       CorpPass::Util.throw_warden(:exception, scope, exception: exception, **others)
     end
 
-    # From a Rack::Request object, get the values thrown by warden
+    # Gets the values thrown by Warden from a +Rack::Request+ object.
     def self.warden_options(request)
       return nil unless request.env.key?('warden.options')
       request.env['warden.options']
