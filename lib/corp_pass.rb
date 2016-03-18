@@ -161,11 +161,11 @@ module CorpPass
   private_class_method :setup_libsaml
 
   def self.setup_serializer
-    Warden::Manager.serialize_into_session do |user|
+    Warden::Manager.serialize_into_session(WARDEN_SCOPE) do |user|
       [user.class.name, user.serialize]
     end
 
-    Warden::Manager.serialize_from_session do |serialized|
+    Warden::Manager.serialize_from_session(WARDEN_SCOPE) do |serialized|
       klass, serialized_data = serialized
       klass.constantize.deserialize serialized_data
     end
