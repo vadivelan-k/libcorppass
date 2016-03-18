@@ -6,8 +6,13 @@ require 'warden'
 #   CorpPass.load_yaml!(File.join(File.dirname(__FILE__), 'config.yml'), 'MY_ENV')
 #   CorpPass.setup!
 #
-#   use Warden::Manager do |manager|
-#     CorpPass.setup_warden_manager!(manager)
+#   Rack::Builder.new do
+#     use Rack::Session::Cookie, secret: 'foobar'
+#
+#     use Warden::Manager do |warden_config|
+#       CorpPass.setup_warden_manager!(warden_config)
+#     end
+#     run app
 #   end
 module CorpPass
   class Error < ::StandardError; end
@@ -87,8 +92,13 @@ module CorpPass
   # Configures the given Warden::Manager for use with CorpPass.
   # @param config [Warden::Manager]
   # @example
-  #   Warden::Manager do |manager|
-  #     CorpPass.setup_warden_manager!(manager)
+  #   Rack::Builder.new do
+  #     use Rack::Session::Cookie, secret: 'foobar'
+  #     
+  #     use Warden::Manager do |warden_config|
+  #       CorpPass.setup_warden_manager!(warden_config)
+  #     end
+  #     run app
   #   end
   def self.setup_warden_manager!(config)
     config_class = config.class
