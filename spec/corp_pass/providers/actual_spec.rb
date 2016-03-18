@@ -7,18 +7,6 @@ RSpec.describe CorpPass::Providers::Actual do
 
   subject { described_class.new }
 
-  before(:all) do
-    sp = 'https://sp.example.com/saml/metadata'
-    Saml.current_provider = Saml.provider(sp)
-    CorpPass.configuration.sp_entity = sp
-    Timecop.freeze(Time.utc(2015, 11, 30, 4, 45))
-  end
-
-  after(:all) do
-    Timecop.return
-    CorpPass::Test::Config.reset_configuration!
-  end
-
   describe 'Entity Metadata' do
     it { expect(subject.send(:sp).entity_id).to eq(sp_entity) }
     it { expect(subject.send(:idp).entity_id).to eq(idp_entity) }
@@ -59,6 +47,16 @@ RSpec.describe CorpPass::Providers::Actual do
   end
 
   describe 'SLO' do
+    before(:all) do
+      sp = 'https://sp.example.com/saml/metadata'
+      Saml.current_provider = Saml.provider(sp)
+      CorpPass.configuration.sp_entity = sp
+    end
+
+    after(:all) do
+      CorpPass::Test::Config.reset_configuration!
+    end
+
     context 'HTTP-Redirect' do
       it 'creates the right SP initiated request' do
         _, slo_request = subject.slo_request_redirect('S1234567A')
@@ -78,6 +76,18 @@ RSpec.describe CorpPass::Providers::Actual do
   end
 
   describe CorpPass::Providers::ActualStrategy do
+    before(:all) do
+      sp = 'https://sp.example.com/saml/metadata'
+      Saml.current_provider = Saml.provider(sp)
+      CorpPass.configuration.sp_entity = sp
+      Timecop.freeze(Time.utc(2015, 11, 30, 4, 45))
+    end
+
+    after(:all) do
+      Timecop.return
+      CorpPass::Test::Config.reset_configuration!
+    end
+
     subject { CorpPass::Providers::ActualStrategy.new(nil) }
 
     let(:request) do
