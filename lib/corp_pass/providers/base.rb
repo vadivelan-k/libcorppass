@@ -4,6 +4,7 @@ require 'corp_pass/notification'
 
 module CorpPass
   module Providers
+    # @abstract
     class Base
       include CorpPass::Notification
 
@@ -11,43 +12,40 @@ module CorpPass
       end
 
       # Override to perform any kinds of setup required
+      # @abstract
       def setup
       end
 
       # Returns a URL to redirect to for IdP initiated SSO
+      # @abstract
       def sso_idp_initiated_url
         fail NotImplementedError, 'Method not implemented'
       end
 
-      # Build a SAML <LogoutRequest> and a URL to redirect to
-      # `name_id` should be a string for the name_id we are logging out
-      # (i.e. the <NameID> from <Subject> in the SAML Assertion)
-      # Should return [url, logout_request] where logout_request is a Saml::Elements::LogoutRequest
-      # and url is the URL to redirect to
+      # Builds a SAML +<LogoutRequest>+ and a redirect URL to initiate an SP-initiated SLO.
+      # @abstract
       def slo_request_redirect(name_id) # rubocop:disable Lint/UnusedMethodArgument
         fail NotImplementedError, 'Method not implemented'
       end
 
-      # Build a SAML <LogoutResponse> and a URL to redirect to
-      # `logout_request` should be a Saml::Elements::LogoutRequest (received from the IdP)
-      # Should return [url, logout_response] where logout_response is a Saml::Elements::LogoutResponse
-      # and URL is the URL to redirect to
+      # Builds a SAML +<LogoutResponse>+ and a redirect URL in response to an IdP-initiated SLO.
+      # @abstract
       def slo_response_redirect(logout_request) # rubocop:disable Lint/UnusedMethodArgument
         fail NotImplementedError, 'Method not implemented'
       end
 
-      # Parse a SAML <LogoutResponse> received via a HTTP Request
-      # `request` should be a Rack::Request (or similarly behaved, like ActionDispatch::Request from rails)
-      # Returns a Saml::Elements::LogoutResponse
+      # Parse a SAML +<LogoutResponse>+ received via a HTTP Request in response to an SP-initiated SLO.
+      # @param request [Rack::Request] a +Rack::Request+ (or similarly behaved, like +ActionDispatch::Request+ from Rails)
+      # @return [Saml::Elements::LogoutResponse]
       def parse_logout_response(request)
         message = Saml::Bindings::HTTPRedirect.receive_message(request, type: :logout_response)
         notify(CorpPass::Events::SLO_RESPONSE, message.to_xml)
         message
       end
 
-      # Parse a SAML <LogoutRequest> received via a HTTP Request
-      # `request` should be a Rack::Request (or similarly behaved, like ActionDispatch::Request from rails)
-      # Returns a Saml::Elements::LogoutRequest
+      # Parse a SAML +<LogoutRequest>+ received via a HTTP Request in response to an IdP-initiated SLO.
+      # @param request [Rack::Request] a +Rack::Request+ (or similarly behaved, like +ActionDispatch::Request+ from Rails)
+      # @return [Saml::Elements::LogoutRequest]
       def parse_logout_request(request)
         message = Saml::Bindings::HTTPRedirect.receive_message(request, type: :logout_request)
         notify(CorpPass::Events::SLO_REQUEST, message.to_xml)
@@ -59,12 +57,14 @@ module CorpPass
         warden.logout(CorpPass::WARDEN_SCOPE)
       end
 
-      # Returns the warden strategy name associated with this provider
+      # Returns the Warden strategy name associated with this provider
+      # @abstract
       def warden_strategy_name
         fail NotImplementedError, 'Method not implemented'
       end
 
-      # Returns the warden strategy class associated with this provider
+      # Returns the Warden strategy class associated with this provider
+      # @abstract
       def warden_strategy
         fail NotImplementedError, 'Method not implemented'
       end
@@ -84,6 +84,8 @@ module CorpPass
       end
     end
 
+    # Abstract strategy. Refer to Warden::Strategy documentation.
+    # @abstract
     class BaseStrategy < Warden::Strategies::Base
       def warden
         env['warden']
@@ -98,6 +100,7 @@ module CorpPass
       end
 
       # Return a string to print to the console
+      # @abstract
       def test_authentication!
         raise NotImplementedError # rubocop:disable Style/SignalException
       end

@@ -1,14 +1,14 @@
 module CorpPass
   module Test
-    # ControllerHelpers provides a facility to test controllers in isolation
-    # when using ActionController::TestCase allowing you to quickly sign_in or
-    # sign_out a user. Do not use ControllerHelpers in integration tests.
+    # +ControllerHelpers+ provides a facility to test controllers in isolation
+    # when using +ActionController::TestCase+ allowing you to quickly +sign_in+ or
+    # +sign_out+ a user. Do not use +ControllerHelpers+ in integration tests.
     #
     # Notice you should not test Warden specific behavior (like Warden callbacks)
-    # using ControllerHelpers since it is a stub of the actual behavior. Such
+    # using +ControllerHelpers+ since it is a stub of the actual behavior. Such
     # callbacks should be tested in your integration suite instead.
     #
-    # This is adapted from Devise::TestHelpers
+    # This is adapted from +Devise::TestHelpers+
     module ControllerHelpers
       include Warden::Test::Helpers
 
@@ -21,7 +21,7 @@ module CorpPass
         end
       end
 
-      # Override process to consider warden.
+      # Override process to consider Warden.
       def process(*)
         # Make sure we always return @response, a la ActionController::TestCase::Behaviour#process,
         # even if warden interrupts
@@ -31,12 +31,14 @@ module CorpPass
         @response
       end
 
-      # We need to setup the environment variables and the response in the controller.
+      # Note: You need to setup the environment variables and the response in the controller.
       def setup_controller_for_warden
         @request.env['action_controller.instance'] = @controller
       end
 
-      # Quick access to Warden::Proxy.
+      # Quick access to Rack's <tt>env['warden']</tt> as a +Warden::Proxy+.
+      #
+      # @return [Warden::Proxy]
       def warden
         @request.env['warden'] ||= begin
           manager = Warden::Manager.new(nil, &Rails.application.config.middleware.find do |m|

@@ -2,6 +2,13 @@ require 'yaml'
 require 'saml'
 require 'warden'
 
+# @example Setup
+#   CorpPass.load_yaml!(File.join(File.dirname(__FILE__), 'config.yml'), 'MY_ENV')
+#   CorpPass.setup!
+#
+#   use Warden::Manager do |manager|
+#     CorpPass.setup_warden_manager!(manager)
+#   end
 module CorpPass
   class Error < ::StandardError; end
 
@@ -21,10 +28,22 @@ module CorpPass
   DEFAULT_STRATEGY_NAME = :corp_pass_actual
   DEFAULT_STRATEGY = CorpPass::Providers::ActualStrategy
 
+  # @return [CorpPass::Config] a {CorpPass::Config} object representing the current CorpPass configuration
   def self.configuration
     @configuration ||= CorpPass::Config.new
   end
 
+  # Loads the configuration file for the specified environment. Top-level keys in the
+  # configuration file are environments.
+  #
+  # Fails when unknown CorpPass configuration keys are found in the configuration YAML.
+  #
+  # @param file [String] path to the configuration YAML file
+  # @param environment [String] environment to load
+  # @example
+  #   config_filepath = File.join(File.dirname(__FILE__), 'config', 'config.yml')
+  #   environment = 'development'
+  #   CorpPass.load_yaml!(config_filepath, environment)
   def self.load_yaml!(file, environment)
     @configuration = nil
     yaml_config = read_yaml(file, environment)
@@ -53,7 +72,7 @@ module CorpPass
     yield configuration
   end
 
-  # CorpPass Setup can only be run once
+  # This method can only be run once. It will fail on subsequent calls.
   def self.setup!
     fail 'Setup already completed' if @setup
     @setup = true
@@ -65,6 +84,12 @@ module CorpPass
     setup_provider!
   end
 
+  # Configures the given Warden::Manager for use with CorpPass.
+  # @param config [Warden::Manager]
+  # @example
+  #   Warden::Manager do |manager|
+  #     CorpPass.setup_warden_manager!(manager)
+  #   end
   def self.setup_warden_manager!(config)
     config_class = config.class
     fail "Config provided #{config_class} does not inherit Warden::Config" unless config_class <= Warden::Config
@@ -77,13 +102,14 @@ module CorpPass
                             action: configuration.failure_action }.compact
   end
 
-  # Clears the current provider and makes a new one
-  # This allows you to change a provider at run time
+  # Clears the current provider and makes a new one.
+  # This lets you change a provider at runtime.
   def self.setup_provider!
     @provider = nil
     provider.setup
   end
 
+  # @return [CorpPass::Provider::Base] the current CorpPass provider
   def self.provider
     @provider ||= make_provider
   end
@@ -100,6 +126,7 @@ module CorpPass
     warden.authenticate!(provider.warden_strategy_name, scope: WARDEN_SCOPE)
   end
 
+  # @return [String]
   def self.sso_idp_initiated_url
     provider.sso_idp_initiated_url
   end

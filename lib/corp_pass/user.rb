@@ -3,8 +3,15 @@ require 'corp_pass'
 require 'corp_pass/util'
 
 module CorpPass
+  # An +Error+ object raised on creation of a {User} with invalid XML.
+  #
+  # See: {User}
+  # @attr_reader xml [String]
   class InvalidUser < Error
     attr_reader :xml
+
+    # @param message [String]
+    # @param xml [String]
     def initialize(message, xml)
       super(message)
       @xml = xml
@@ -26,21 +33,29 @@ module CorpPass
       @xml_document = xml_document
     end
 
+    # Returns the XML document backing this {User}.
+    # @return [Array<String>]
     def serialize
       [xml_document]
     end
 
+    # Deserializes a {User} from an XML document.
+    # @param dumped_array [Array<String>] an +Array+ with the serialized {User} as the first element.
     def self.deserialize(dumped_array)
       xml = dumped_array[0]
       new(xml)
     end
 
+    # Returns the +Nokogiri::XML+ document backing this {User}.
+    # @return [Nokogiri::XML]
     def document
       @document ||= Nokogiri::XML(@xml_document)
     end
 
     delegate :root, to: :document
 
+    # Returns whether this {User} is valid.
+    # @return [Boolean]
     def validate
       return false unless xml_valid?
       return false unless xsd_valid?
@@ -54,6 +69,7 @@ module CorpPass
     end
     alias valid? validate
 
+    # Validates this {User}, raising an {InvalidUser} error if invalid.
     def validate!
       unless validate
         # Disabling the cop because they cannot make up their mind on this!
@@ -63,6 +79,13 @@ module CorpPass
       true
     end
 
+    # Returns whether the XML backing this user has errors. Note that this method does not
+    # validate the XML against the namespace defined in the specification due to inconsistencies
+    # found between that and the actual XML response.
+    #
+    # Also adds any errors found in the XML to the instance variable +@errors+.
+    #
+    # @return [Boolean]
     def xml_valid?
       @xml_valid ||= begin
         valid = document.errors.empty?
@@ -101,7 +124,7 @@ module CorpPass
                                   end
     end
 
-    # User Defined Login ID
+    # @return [String] user-defined login ID.
     def id
       single_textual_value_of_type_from_root 'CPID'
     end
@@ -110,7 +133,7 @@ module CorpPass
       single_textual_value_of_type_from_root 'CPAccType'
     end
 
-    # User NRIC/FIN
+    # @return [String] user NRIC/FIN.
     def user_id
       single_textual_value_of_type_from_root 'CPUID'
     end
@@ -144,6 +167,7 @@ module CorpPass
                                end
     end
 
+    # @return [Boolean] whether this {User} is also a SingPass holder.
     def sp_holder?
       is_sp_holder = single_textual_value_of_type_from_root('ISSPHOLDER')
       CorpPass::Util.string_to_boolean(is_sp_holder, true_string: 'yes', false_string: 'no')
