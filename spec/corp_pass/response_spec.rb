@@ -15,8 +15,7 @@ RSpec.describe CorpPass::Response do
 
   context 'Valid SAML Response' do
     subject do
-      fixture_xml = File.read('spec/fixtures/corp_pass/saml_response.xml')
-      saml_response = Saml::Response.parse(fixture_xml)
+      saml_response = create(:saml_response, :encrypt_id, :encrypt_assertion)
       CorpPass::Response.new saml_response
     end
 
@@ -39,8 +38,7 @@ RSpec.describe CorpPass::Response do
 
   context 'Invalid SAML Response' do
     subject do
-      fixture_xml = File.read('spec/fixtures/corp_pass/saml_response_unencrypted_invalid.xml')
-      saml_response = Saml::Response.parse(fixture_xml)
+      saml_response = create(:saml_response, :invalid)
       CorpPass::Response.new saml_response
     end
 

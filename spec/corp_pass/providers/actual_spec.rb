@@ -86,7 +86,7 @@ RSpec.describe CorpPass::Providers::Actual do
     end
 
     describe :resolve_artifact! do
-      let(:saml_response) { Saml::Response.parse(File.read('spec/fixtures/corp_pass/saml_response.xml')) }
+      let(:saml_response) { create(:saml_response, :encrypt_id, :encrypt_assertion) }
       let(:artifact_response) do
         artifact_response = Saml::ArtifactResponse.new(status_value: Saml::TopLevelCodes::SUCCESS)
         artifact_response.response = saml_response
@@ -168,7 +168,7 @@ RSpec.describe CorpPass::Providers::Actual do
       end
 
       it 'raises an exception when the SAML Response received is invalid' do
-        response = Saml::Response.parse(File.read('spec/fixtures/corp_pass/saml_response_unencrypted_invalid.xml'))
+        response = create(:saml_response, :invalid)
         expect(response).to receive(:success?).twice.and_return(true) # Skip the ArtifactResolutionFailure exception
         expect { subject.check_response!(response) }.to raise_error(CorpPass::Providers::SamlResponseValidationFailure)
       end
@@ -176,8 +176,7 @@ RSpec.describe CorpPass::Providers::Actual do
 
     describe :authenticate! do
       let(:response) do
-        fixture_xml = File.read('spec/fixtures/corp_pass/saml_response.xml')
-        saml_response = Saml::Response.parse(fixture_xml)
+        saml_response = create(:saml_response, :encrypt_id, :encrypt_assertion)
         CorpPass::Response.new(saml_response)
       end
 
