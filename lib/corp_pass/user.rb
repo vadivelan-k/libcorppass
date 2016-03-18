@@ -124,7 +124,7 @@ module CorpPass
                                   end
     end
 
-    # @return [String] user-defined login ID.
+    # @return [String] user-defined login ID
     def id
       single_textual_value_of_type_from_root 'CPID'
     end
@@ -133,7 +133,7 @@ module CorpPass
       single_textual_value_of_type_from_root 'CPAccType'
     end
 
-    # @return [String] user NRIC/FIN.
+    # @return [String] user NRIC/FIN or CorpPass generated internal ID if user does not have a NRIC/FIN
     def user_id
       single_textual_value_of_type_from_root 'CPUID'
     end
@@ -167,7 +167,7 @@ module CorpPass
                                end
     end
 
-    # @return [Boolean] whether this {User} is also a SingPass holder.
+    # @return [Boolean] whether this {User} is also a SingPass holder
     def sp_holder?
       is_sp_holder = single_textual_value_of_type_from_root('ISSPHOLDER')
       CorpPass::Util.string_to_boolean(is_sp_holder, true_string: 'yes', false_string: 'no')
