@@ -36,8 +36,8 @@ module CorpPass
         fail NotImplementedError, 'Method not implemented'
       end
 
-      def logout(request)
-        CorpPass.warden(request).logout CorpPass::WARDEN_SCOPE
+      def logout(warden)
+        warden.logout(CorpPass::WARDEN_SCOPE)
       end
 
       def warden_strategy_name
