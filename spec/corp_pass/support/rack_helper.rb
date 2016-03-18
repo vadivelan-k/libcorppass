@@ -20,6 +20,7 @@ module CorpPass
           use Warden::Manager do |warden_config|
             CorpPass.setup_warden_manager!(warden_config)
           end
+          use CorpPass::Test::RackHelper::HookMiddleware
           if app.nil? && !mapping.empty?
             mapping.each do |route, proc|
               map route, &proc
@@ -35,6 +36,18 @@ module CorpPass
         env = { 'HTTP_VERSION' => '1.1', 'REQUEST_METHOD' => method.to_s }.merge(env)
         env.delete('PATH_INFO')
         Rack::MockRequest.env_for("#{path}?#{Rack::Utils.build_query(params)}", env)
+      end
+
+      # This middleware is used to cause the Warden hooks to be run
+      class HookMiddleware
+        def initialize(app)
+          @app = app
+        end
+
+        def call(env)
+          CorpPass.authenticated?(env['warden'])
+          @app.call(env)
+        end
       end
     end
   end

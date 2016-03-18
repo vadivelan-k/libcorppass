@@ -67,28 +67,22 @@ RSpec.describe CorpPass::Timeout do
     end
 
     before(:all) do
-      ok_response = lambda do |e|
-        if e['warden'].authenticated?
-          [200, { 'Content-Type' => 'text/plain' }, 'OK']
-        else
-          [401, { 'Content-Type' => 'text/plain' }, 'You Fail']
-        end
-      end
-
       mapping = {
-        '/foobar' => proc do
-          run ok_response
-        end,
-        '/skip' => proc do
-                     run ok_response
-                   end
+        '/foobar' => proc { run CorpPass::Test::RackHelper::SUCCESS_APP },
+        '/skip' => proc { run CorpPass::Test::RackHelper::SUCCESS_APP }
       }
 
       @app = setup_rack(nil, mapping, [SkipMiddleware]).to_app
       @user = create :corp_pass_user
-      Timecop.freeze
+
       CorpPass.configuration.timeout = 10
       CorpPass.configuration.session_max_lifetime = 12
+    end
+
+    before(:each) do
+      @now = Time.now.utc
+      Timecop.freeze(@now)
+      login_as(@user)
     end
 
     after(:each) do
@@ -103,78 +97,66 @@ RSpec.describe CorpPass::Timeout do
     it 'should set last_request_at after each request' do
       initial_time = Time.now.utc.to_i
       env = env_with_params('/foobar')
-      login_as(@user)
       @app.call(env)
       expect(CorpPass::Timeout.last_request(env['warden']).to_i).to eq(initial_time)
 
-      Timecop.travel 5.seconds
-      login_as(@user, event: :set_user)
+      Timecop.freeze @now + 5.seconds
       @app.call(env)
       expect(CorpPass::Timeout.last_request(env['warden']).to_i).to eq(initial_time + 5)
     end
 
     it 'should not touch the last_request_at when skip_timeout_refresh is called' do
       env = env_with_params('/foobar')
-      login_as(@user)
       @app.call(env)
       expected_timestamp = CorpPass::Timeout.last_request(env['warden'])
       expect(expected_timestamp).to_not be_nil
 
-      Timecop.travel 10.seconds
+      Timecop.freeze @now + 10.seconds
       env = env_with_params('/skip', {}, env)
-      login_as(@user, event: :set_user)
       @app.call(env)
       expect(CorpPass::Timeout.last_request(env['warden'])).to eq(expected_timestamp)
     end
 
     it 'should not log the user out before timeout' do
       env = env_with_params('/foobar')
-      login_as(@user)
       @app.call(env)
 
-      Timecop.travel 5.seconds
-      login_as(@user, event: :set_user)
-      expect { @app.call(env) }.to_not throw_symbol(:warden, scope: CorpPass::WARDEN_SCOPE, type: :timeout)
+      Timecop.freeze @now + 5.seconds
+      response = @app.call(env)
+      expect(response[0]).to eq(200)
       expect(env['warden'].authenticated?).to eq(true)
     end
 
     it 'should log the user out after timeout' do
       env = env_with_params('/foobar')
-      login_as(@user)
       @app.call(env)
 
-      Timecop.travel 11.seconds
-      login_as(@user, event: :set_user)
-      expect { @app.call(env) }.to throw_symbol(:warden, scope: CorpPass::WARDEN_SCOPE,
-                                                         type: :timeout)
+      Timecop.freeze @now + 11.seconds
+      response = @app.call(env)
+      expect(response[0]).to eq(401) # Failure app called
       expect(env['warden'].authenticated?).to eq(false)
     end
 
     it 'should not change the session_started_at timestamp after initial login' do
       expected = Time.now.utc.to_i
       env = env_with_params('/foobar')
-      login_as(@user)
       @app.call(env)
 
-      Timecop.travel 5.seconds
-      login_as(@user, event: :set_user)
+      Timecop.freeze @now + 5.seconds
       @app.call(env)
       expect(CorpPass::Timeout.session_start(env['warden']).to_i).to eq(expected)
     end
 
     it 'should log the user out after the session maximum length' do
       env = env_with_params('/foobar')
-      login_as(@user)
       @app.call(env)
 
-      Timecop.travel 5.seconds
-      login_as(@user, event: :set_user)
+      Timecop.freeze @now + 5.seconds
       @app.call(env)
 
-      Timecop.travel 7.seconds
-      login_as(@user, event: :set_user)
-      expect { @app.call(env) }.to throw_symbol(:warden, scope: CorpPass::WARDEN_SCOPE,
-                                                         type: :timeout)
+      Timecop.freeze @now + 12.seconds
+      response = @app.call(env)
+      expect(response[0]).to eq(401) # Failure app called
       expect(env['warden'].authenticated?).to eq(false)
     end
   end

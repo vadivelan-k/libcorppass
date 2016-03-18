@@ -11,18 +11,30 @@ RSpec.describe CorpPass do
       CorpPass::Test::Config.reset_configuration!
     end
 
-    it { expect { |b| CorpPass.configure(&b) }.to yield_with_args(CorpPass::Config) }
+    it { expect { |b| CorpPass.configure!(&b) }.to yield_with_args(CorpPass::Config) }
 
-    it 'parses the .yml properly and loads the correct environment' do
-      CorpPass.load_yaml(yaml_file, 'test')
+    it 'configure!! creates a new configuration object after each configuration operation' do
+      original = CorpPass.configuration
+      CorpPass.configure! { |_config| }
+      expect(CorpPass.configuration).to_not be original
+    end
+
+    it 'load_yaml! parses the .yml properly and loads the correct environment' do
+      CorpPass.load_yaml!(yaml_file, 'test')
       expect(CorpPass.configuration.sp_entity).to eq('https://sp.example.com')
       expect(CorpPass.configuration.idp_entity).to eq('https://idp.example.com')
       expect(CorpPass.configuration.slo_enabled).to be true
     end
 
-    it 'yields configuration when a block is provided' do
-      expect { |b| CorpPass.load_yaml(yaml_file, 'test', &b) }
+    it 'load_yaml!yields configuration when a block is provided' do
+      expect { |b| CorpPass.load_yaml!(yaml_file, 'test', &b) }
         .to yield_with_args(CorpPass::Config)
+    end
+
+    it 'load_yaml! creates a new configuration object after each configuration operation' do
+      original = CorpPass.configuration
+      CorpPass.load_yaml!(yaml_file, 'test')
+      expect(CorpPass.configuration).to_not be original
     end
   end
 
@@ -90,6 +102,30 @@ RSpec.describe CorpPass do
       CorpPass.configuration.slo_enabled = false
       actual_provider = CorpPass.send(:make_provider)
       expect(eigenclass(actual_provider).included_modules).to include(CorpPass::Providers::StubLogout)
+    end
+  end
+  describe 'Session serialization' do
+    include CorpPass::Test::RackHelper
+
+    after(:each) do
+      Warden.test_reset!
+    end
+
+    after(:all) do
+      Timecop.return
+    end
+
+    it 'serializes and deserializes an object exactly' do
+      user = create :corp_pass_user
+      login_as(user)
+      env = env_with_params
+      setup_rack(CorpPass::Test::RackHelper::SUCCESS_APP).call(env)
+
+      setup_rack do |e|
+        user = CorpPass.user(e['warden'])
+        expect(user).to eq(user)
+        CorpPass::Test::RackHelper::SUCCESS_APP.call(e)
+      end.call(env)
     end
   end
 end

@@ -9,7 +9,6 @@ module CorpPass
   require 'corp_pass/events'
   require 'corp_pass/notification'
   require 'corp_pass/response'
-  require 'corp_pass/session_serializer'
   require 'corp_pass/config'
   require 'corp_pass/user'
   require 'corp_pass/providers/actual'
@@ -26,15 +25,14 @@ module CorpPass
     @configuration ||= CorpPass::Config.new
   end
 
-  def self.load_yaml(file, environment)
-    yaml = read_yaml(file)
-    config = yaml[environment] || yaml['default']
-    fail 'Invalid CorpPass configuration file' unless config
+  def self.load_yaml!(file, environment)
+    @configuration = nil
+    yaml_config = read_yaml(file, environment)
 
-    config.keys.each do |key|
+    yaml_config.keys.each do |key|
       method = "#{key}="
       if configuration.respond_to?(method)
-        configuration.send(method, config[key])
+        configuration.send(method, yaml_config[key])
       else
         fail "Unknown CorpPass configuration option #{key}"
       end
@@ -42,12 +40,16 @@ module CorpPass
     yield configuration if block_given?
   end
 
-  def self.read_yaml(file)
-    YAML.load(ERB.new(File.read(file)).result)
+  def self.read_yaml(file, environment)
+    yaml = YAML.load(ERB.new(File.read(file)).result)
+    yaml_config = yaml[environment] || yaml['default']
+    fail 'Invalid CorpPass configuration file' unless yaml_config
+    yaml_config
   end
   private_class_method :read_yaml
 
-  def self.configure
+  def self.configure!
+    @configuration = nil
     yield configuration
   end
 
@@ -58,6 +60,7 @@ module CorpPass
 
     setup_libsaml
     setup_default_strategy
+    setup_serializer
     CorpPass::Timeout.setup_warden_timeout
     setup_provider!
   end
@@ -87,6 +90,14 @@ module CorpPass
 
   def self.warden(request)
     request.env['warden']
+  end
+
+  def self.user(warden)
+    warden.user(CorpPass::WARDEN_SCOPE)
+  end
+
+  def self.authenticated?(warden)
+    warden.authenticated?(CorpPass::WARDEN_SCOPE)
   end
 
   def self.authenticate!(request)
@@ -148,6 +159,18 @@ module CorpPass
     end
   end
   private_class_method :setup_libsaml
+
+  def self.setup_serializer
+    Warden::Manager.serialize_into_session do |user|
+      [user.class.name, user.serialize]
+    end
+
+    Warden::Manager.serialize_from_session do |serialized|
+      klass, serialized_data = serialized
+      klass.constantize.deserialize serialized_data
+    end
+  end
+  private_class_method :setup_serializer
 
   def self.setup_default_strategy
     Warden::Strategies.add(DEFAULT_STRATEGY_NAME, DEFAULT_STRATEGY)
