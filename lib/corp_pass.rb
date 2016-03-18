@@ -88,10 +88,6 @@ module CorpPass
     @provider ||= make_provider
   end
 
-  def self.warden(request)
-    request.env['warden']
-  end
-
   def self.user(warden)
     warden.user(CorpPass::WARDEN_SCOPE)
   end
@@ -100,8 +96,8 @@ module CorpPass
     warden.authenticated?(CorpPass::WARDEN_SCOPE)
   end
 
-  def self.authenticate!(request)
-    warden(request).authenticate!(provider.warden_strategy_name, scope: WARDEN_SCOPE)
+  def self.authenticate!(warden)
+    warden.authenticate!(provider.warden_strategy_name, scope: WARDEN_SCOPE)
   end
 
   def self.sso_idp_initiated_url
@@ -124,8 +120,8 @@ module CorpPass
     provider.parse_logout_request request
   end
 
-  def self.logout(request)
-    provider.logout(request)
+  def self.logout(warden)
+    provider.logout(warden)
   end
 
   def self.make_provider

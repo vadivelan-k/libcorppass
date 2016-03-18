@@ -15,14 +15,6 @@ module CorpPass
       session_started_at <= CorpPass.configuration.session_max_lifetime.to_i.seconds.ago
     end
 
-    # If you want your action to skip refreshing the timeout,
-    # add something like this to your controller:
-    # prepend_before_filter :skip_timeout_refresh, only: :action_required
-    #
-    # protected
-    # def skip_timeout_refresh
-    #   CorpPass::Timeout.skip_timeout_refresh(request)
-    # end
     def self.skip_timeout_refresh(env)
       notify(CorpPass::Events::SKIP_TIMEOUT_REFRESH, 'Last request touching skipped')
       env[SKIP_TIMEOUT_REFRESH] = true
@@ -50,7 +42,7 @@ module CorpPass
         inactivity_timeout, session_timeout = user_timeout?(env, user, warden)
 
         if inactivity_timeout || session_timeout
-          CorpPass.logout(warden.request)
+          CorpPass.logout(warden)
           CorpPass::Util.throw_warden(:timeout, scope)
         end
 

@@ -12,15 +12,6 @@ module CorpPass
         fail NotImplementedError
       end
 
-      def parse_logout_response(_request)
-        destination = idp.single_logout_service_url(Saml::ProtocolBinding::HTTP_REDIRECT)
-        make_stub_logout_response(destination)
-      end
-
-      def parse_logout_request(_request)
-        fail NotImplementedError
-      end
-
       private
 
       def make_stub_logout_response(destination)
