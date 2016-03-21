@@ -73,10 +73,7 @@ RSpec.describe CorpPass::Timeout do
       }
 
       CorpPass.configuration.failure_app = lambda do |env|
-        body = 'You Fail'
-        if CorpPass::Timeout.timeout_thrown?(CorpPass::Util.warden_options(env))
-          body = 'Timeout'
-        end
+        body = CorpPass::Timeout.timeout_thrown?(CorpPass::Util.warden_options(env)) ? 'Timeout' : 'You Fail'
         [401, { 'Content-Type' => 'text/plain' }, [body]]
       end
 
