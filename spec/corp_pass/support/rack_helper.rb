@@ -35,6 +35,8 @@ module CorpPass
       def env_with_params(path = '/', params = {}, env = {})
         method = params.delete(:method) || 'GET'
         env = { 'HTTP_VERSION' => '1.1', 'REQUEST_METHOD' => method.to_s }.merge(env)
+        # Delete the following keys to prevent the new URL from being overwritten when 
+        # MockRequest merges the provided `env` hash
         %w(SERVER_NAME SERVER_PORT QUERY_STRING PATH_INFO rack.url_scheme).each do |key|
           env.delete(key)
         end
@@ -42,6 +44,8 @@ module CorpPass
       end
 
       def env_with_url(url, env = {})
+        # Delete the following keys to prevent the new URL from being overwritten when 
+        # MockRequest merges the provided `env` hash
         %w(SERVER_NAME SERVER_PORT QUERY_STRING PATH_INFO rack.url_scheme).each do |key|
           env.delete(key)
         end
