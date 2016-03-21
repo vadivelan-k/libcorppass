@@ -228,4 +228,69 @@ RSpec.describe CorpPass::Providers::Actual do
       end
     end
   end
+
+  describe 'Authentication with Warden' do
+    include CorpPass::Test::RackHelper
+
+    before(:all) do
+      sp = 'https://sp.example.com/saml/metadata'
+      @sp = Saml.provider(sp)
+      Saml.current_provider = @sp
+      CorpPass.configuration.sp_entity = sp
+      Timecop.freeze(Time.utc(2015, 11, 30, 4, 45))
+
+      @mapping = {
+        '/' => proc do
+          run CorpPass::Test::RackHelper::SUCCESS_APP
+        end,
+        '/sso' => proc do
+                    app = lambda do |env|
+                      response = Rack::Response.new
+                      location = '/'
+                      location = CorpPass.sso_idp_initiated_url unless CorpPass.authenticated?(env['warden'])
+                      response.redirect(location)
+                      response
+                    end
+                    run app
+                  end,
+        '/acs' => proc do
+                    app = lambda do |env|
+                      CorpPass.authenticate!(env['warden'])
+                      CorpPass::Test::RackHelper::SUCCESS_RESPONSE
+                    end
+                    run app
+                  end,
+        '/slo' => proc do
+                    run CorpPass::Test::RackHelper::SUCCESS_APP
+                  end
+      }
+    end
+
+    after(:all) do
+      Timecop.return
+      CorpPass::Test::Config.reset_configuration!
+    end
+
+    it 'authenticates successfully' do
+      app = setup_rack(nil, @mapping).to_app
+      env = env_with_params('/sso')
+      response = app.call(env)
+      expect(response[0]).to eq 302
+      expect(response[1]).to include('Location' => CorpPass.sso_idp_initiated_url)
+
+      saml_response = create(:saml_response, :encrypt_id, :encrypt_assertion)
+      acs = @sp.assertion_consumer_service
+      artifact_response = Saml::ArtifactResponse.new(status_value: Saml::TopLevelCodes::SUCCESS,
+                                                     issuer: idp_entity,
+                                                     destination: acs)
+      artifact_response.response = saml_response
+
+      artifact_resolution_url = Saml.provider(idp_entity).artifact_resolution_service_url(0)
+      stub_request(:post, artifact_resolution_url).to_return(body: Saml::Util.sign_xml(artifact_response, :soap))
+      env = env_with_params('/acs', { 'SAMLart' => 'foobar' }, env)
+      response = app.call(env)
+      expect(response[0]).to eq 200
+      expect(CorpPass.authenticated?(env['warden'])).to be true
+    end
+  end
 end

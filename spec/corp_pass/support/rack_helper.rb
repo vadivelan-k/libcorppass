@@ -5,8 +5,8 @@ module CorpPass
   module Test
     module RackHelper
       include Warden::Test::Helpers
-      FAILURE_RESPONSE = [401, { 'Content-Type' => 'text/plain' }, ['You Fail!']]
-      SUCCESS_RESPONSE = [200, { 'Content-Type' => 'text/plain' }, ['You Win']]
+      FAILURE_RESPONSE = [401, { 'Content-Type' => 'text/plain' }, ['You Fail!']].freeze
+      SUCCESS_RESPONSE = [200, { 'Content-Type' => 'text/plain' }, ['You Win']].freeze
       FAILURE_APP = ->(_e) { FAILURE_RESPONSE }
       SUCCESS_APP = ->(_e) { SUCCESS_RESPONSE }
 
