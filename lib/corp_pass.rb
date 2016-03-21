@@ -189,6 +189,7 @@ module CorpPass
                                                                   configuration.encryption_key, nil,
                                                                   configuration.signing_key),
                             default: true
+      config.generate_key_name = false
     end
   end
   private_class_method :setup_libsaml
