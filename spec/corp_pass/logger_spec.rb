@@ -69,6 +69,10 @@ RSpec.describe CorpPass::Logger do
         .with(CorpPass::Events::PREFIX).and_call_original
       @cp_logger.subscribe_all
 
+      ActiveSupport::Notifications.instrument 'corp_pass.foobar', 'foobar'
+      @string_io.rewind
+      expect(@string_io.gets).to eq("[CorpPass] [corp_pass.foobar] foobar\n")
+
       expect(ActiveSupport::Notifications).to receive(:unsubscribe).twice.and_call_original
       @cp_logger.unsubscribe_all
     end

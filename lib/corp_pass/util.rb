@@ -17,9 +17,9 @@ module CorpPass
     end
 
     # From a Rack::Request object, get the values thrown by warden
-    def self.warden_options(request)
-      return nil unless request.env.key?('warden.options')
-      request.env['warden.options']
+    def self.warden_options(env)
+      return nil unless env.key?('warden.options')
+      env['warden.options']
     end
 
     def self.authentication_error?(warden_options)

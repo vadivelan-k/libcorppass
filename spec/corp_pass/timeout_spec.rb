@@ -72,6 +72,14 @@ RSpec.describe CorpPass::Timeout do
         '/skip' => proc { run CorpPass::Test::RackHelper::SUCCESS_APP }
       }
 
+      CorpPass.configuration.failure_app = lambda do |env|
+        body = 'You Fail'
+        if CorpPass::Timeout.timeout_thrown?(CorpPass::Util.warden_options(env))
+          body = 'Timeout'
+        end
+        [401, { 'Content-Type' => 'text/plain' }, [body]]
+      end
+
       @app = setup_rack(nil, mapping, [SkipMiddleware]).to_app
       @user = create :corp_pass_user
 
@@ -134,6 +142,7 @@ RSpec.describe CorpPass::Timeout do
       Timecop.freeze @now + 11.seconds
       response = @app.call(env)
       expect(response[0]).to eq(401) # Failure app called
+      expect(response[2]).to eq(['Timeout'])
       expect(env['warden'].authenticated?).to eq(false)
     end
 
@@ -157,6 +166,7 @@ RSpec.describe CorpPass::Timeout do
       Timecop.freeze @now + 12.seconds
       response = @app.call(env)
       expect(response[0]).to eq(401) # Failure app called
+      expect(response[2]).to eq(['Timeout'])
       expect(env['warden'].authenticated?).to eq(false)
     end
   end
