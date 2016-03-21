@@ -233,10 +233,12 @@ RSpec.describe CorpPass::Providers::Actual do
     include CorpPass::Test::RackHelper
 
     before(:all) do
-      sp = 'https://sp.example.com/saml/metadata'
-      @sp = Saml.provider(sp)
+      @sp_entity = 'https://sp.example.com/saml/metadata'
+      @sp = Saml.provider(@sp_entity)
+      @idp_entity = 'https://idp.example.com/saml2/idp/metadata'
+      @idp = Saml.provider(@idp_entity)
       Saml.current_provider = @sp
-      CorpPass.configuration.sp_entity = sp
+      CorpPass.configuration.sp_entity = @sp_entity
       Timecop.freeze(Time.utc(2015, 11, 30, 4, 45))
 
       @mapping = {
@@ -261,9 +263,44 @@ RSpec.describe CorpPass::Providers::Actual do
                     run app
                   end,
         '/slo' => proc do
-                    run CorpPass::Test::RackHelper::SUCCESS_APP
+                    app = lambda do |env|
+                      request = Rack::Request.new(env)
+                      if request[:SAMLRequest] # IdP initiated SLO
+                        logout_request = CorpPass.parse_logout_request request
+                        if logout_request.name_id == env['warden'].user.user_id
+                          CorpPass.logout(env['warden'])
+                          slo_url, _logout_response = CorpPass.slo_response_redirect(logout_request)
+                          response = Rack::Response.new
+                          response.redirect(slo_url)
+                          response
+                        else
+                          CorpPass::Test::RackHelper::FAILURE_RESPONSE
+                        end
+                      elsif request[:SAMLResponse] # SP initiated SLO response from IdP
+                        logout_response = CorpPass.parse_logout_response(request)
+                        if logout_response.in_response_to == env['rack.session']['logout_id'] &&
+                           logout_response.success?
+                          CorpPass.logout(env['warden'])
+                          CorpPass::Test::RackHelper::SUCCESS_RESPONSE
+                        else
+                          CorpPass::Test::RackHelper::FAILURE_RESPONSE
+                        end
+                      else # Start SP initiated SLO
+                        url, logout_request = CorpPass.slo_request_redirect(env['warden'].user.user_id)
+                        env['rack.session']['logout_id'] = logout_request._id
+                        response = Rack::Response.new
+                        response.redirect(url)
+                        response
+                      end
+                    end
+                    run app
                   end
       }
+      @app = setup_rack(nil, @mapping).to_app
+    end
+
+    after(:each) do
+      Warden.test_reset!
     end
 
     after(:all) do
@@ -272,9 +309,8 @@ RSpec.describe CorpPass::Providers::Actual do
     end
 
     it 'authenticates successfully' do
-      app = setup_rack(nil, @mapping).to_app
       env = env_with_params('/sso')
-      response = app.call(env)
+      response = @app.call(env)
       expect(response[0]).to eq 302
       expect(response[1]).to include('Location' => CorpPass.sso_idp_initiated_url)
 
@@ -288,9 +324,68 @@ RSpec.describe CorpPass::Providers::Actual do
       artifact_resolution_url = Saml.provider(idp_entity).artifact_resolution_service_url(0)
       stub_request(:post, artifact_resolution_url).to_return(body: Saml::Util.sign_xml(artifact_response, :soap))
       env = env_with_params('/acs', { 'SAMLart' => 'foobar' }, env)
-      response = app.call(env)
-      expect(response[0]).to eq 200
+      response = @app.call(env)
+      expect(response[0]).to eq(200)
       expect(CorpPass.authenticated?(env['warden'])).to be true
+    end
+
+    it 'calls the failure app when authentication fails' do
+      artifact_resolution_url = Saml.provider(idp_entity).artifact_resolution_service_url(0)
+      stub_request(:post, artifact_resolution_url).to_timeout.times(2)
+      env = env_with_params('/acs', 'SAMLart' => 'foobar')
+      response = @app.call(env)
+      expect(response).to eq CorpPass::Test::RackHelper::FAILURE_RESPONSE
+      expect(CorpPass.authenticated?(env['warden'])).to be false
+    end
+
+    it 'performs a SP initiated SLO properly' do
+      user = create :corp_pass_user
+      login_as(user)
+      env = env_with_params('/slo')
+      response = @app.call(env)
+      expect(env['warden'].authenticated?).to be true
+
+      Saml.current_provider = @idp
+      idp_env = env_with_url(response[2].location)
+      logout_request = nil
+      expect do
+        logout_request = Saml::Bindings::HTTPRedirect.receive_message(Rack::Request.new(idp_env), type: :logout_request)
+      end.to_not raise_error
+
+      # Make LogoutResponse
+      Saml.current_provider = @sp
+      destination = @sp.single_logout_service_url(Saml::ProtocolBinding::HTTP_REDIRECT)
+      logout_response = Saml::LogoutResponse.new destination: destination,
+                                                 in_response_to: logout_request._id,
+                                                 issuer: @idp_entity,
+                                                 status_value: Saml::TopLevelCodes::SUCCESS
+      response_url = ::URI.parse(Saml::Bindings::HTTPRedirect.create_url(logout_response))
+      env = env_with_params('/slo', CGI.parse(response_url.query), env)
+      response = @app.call(env)
+      expect(response[0]).to eq(200)
+      expect(env['warden'].authenticated?).to be false
+    end
+
+    it 'performs an IdP initiated SLO properly' do
+      user = create :corp_pass_user
+      login_as(user)
+
+      destination = @sp.single_logout_service_url(Saml::ProtocolBinding::HTTP_REDIRECT)
+      logout_request = Saml::LogoutRequest.new destination: destination,
+                                               name_id: user.user_id,
+                                               issuer: @idp_entity
+      request_url = ::URI.parse(Saml::Bindings::HTTPRedirect.create_url(logout_request))
+      env = env_with_params('/slo', CGI.parse(request_url.query))
+      response = @app.call(env)
+
+      expect(response[0]).to eq 302
+      Saml.current_provider = @idp
+      idp_env = env_with_url(response[2].location)
+      expect do
+        Saml::Bindings::HTTPRedirect.receive_message(Rack::Request.new(idp_env), type: :logout_response)
+      end.to_not raise_error
+      expect(env['warden'].authenticated?).to be false
+      Saml.current_provider = @sp
     end
   end
 end

@@ -41,6 +41,13 @@ module CorpPass
         Rack::MockRequest.env_for("#{path}?#{Rack::Utils.build_query(params)}", env)
       end
 
+      def env_with_url(url, env = {})
+        %w(SERVER_NAME SERVER_PORT QUERY_STRING PATH_INFO rack.url_scheme).each do |key|
+          env.delete(key)
+        end
+        Rack::MockRequest.env_for(url, env)
+      end
+
       # This middleware is used to cause the Warden hooks to be run
       class HookMiddleware
         def initialize(app)
