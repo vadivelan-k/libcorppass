@@ -1,93 +1,48 @@
-require 'nokogiri'
 require 'xmldsig'
 require 'openssl'
-require 'libsaml'
+require 'saml'
 
 module CorpPass
-  # TODO: Write tests
   module Metadata
-    XPATH_SIG_CERT_ELEMENT = '//ds:Signature//ds:X509Certificate'.freeze
-    XPATH_CERT_ELEMENT = '//md:KeyDescriptor[@use="%s"]//ds:X509Certificate'.freeze
-    XPATH_ENTITY_ID = '/*/@entityID'.freeze
-    XPATH_ACS_LOCATION = '//md:AssertionConsumerService/@Location'.freeze
-    XPATH_SLO_LOCATION = '//md:SingleLogoutService/@Location'.freeze
+    def self.generate(entity_id:, acs:, slo:, encryption_crt:, signing_key:, signing_crt:)
+      entity_descriptor = Saml::Elements::EntityDescriptor.new(entity_id: entity_id)
+      sp_descriptor = Saml::Elements::SPSSODescriptor.new(authn_requests_signed: true, want_assertions_signed: true)
+      sp_descriptor.add_assertion_consumer_service(Saml::ProtocolBinding::HTTP_REDIRECT, acs, 0, true)
+      sp_descriptor.single_logout_services << Saml::ComplexTypes::
+              SSODescriptorType::SingleLogoutService.new(binding: Saml::ProtocolBinding::HTTP_REDIRECT, location: slo)
 
-    def self.generate(args)
-      unsigned = template
+      signing_key_info = Saml::Elements::KeyInfo.new(IO.read(signing_crt))
+      sp_descriptor.key_descriptors << Saml::Elements::KeyDescriptor
+                                       .new(use: Saml::Elements::KeyDescriptor::UseTypes::SIGNING,
+                                            key_info: signing_key_info)
+      encryption_key_info = Saml::Elements::KeyInfo.new(IO.read(encryption_crt))
+      sp_descriptor.key_descriptors << Saml::Elements::KeyDescriptor
+                                       .new(use: Saml::Elements::KeyDescriptor::UseTypes::ENCRYPTION,
+                                            key_info: encryption_key_info)
+      entity_descriptor.sp_sso_descriptor = sp_descriptor
 
-      populate_certificates!(args, unsigned)
-      populate_attributes!(args, unsigned)
-
-      populate_signature_certificate!(unsigned, args[:signing_crt])
-      signed = sign_document(unsigned, args[:signing_key])
-      fail 'Signature verification failed' unless validate_signature(signed, args[:signing_crt])
-
-      validate_metadata(signed)
-
-      write_xml(signed, args[:out_file])
-    end
-
-    def self.populate_attributes!(args, unsigned)
-      populate_attribute!(unsigned, XPATH_ENTITY_ID, args[:entity_id])
-      populate_attribute!(unsigned, XPATH_ACS_LOCATION, args[:acs])
-      populate_attribute!(unsigned, XPATH_SLO_LOCATION, args[:slo])
-    end
-
-    def self.populate_certificates!(args, unsigned)
-      populate_key_descriptor_certificate!(unsigned, 'signing', args[:signing_crt])
-      populate_key_descriptor_certificate!(unsigned, 'encryption', args[:encryption_crt])
-    end
-
-    def self.template
-      xml = IO.read('lib/corp_pass/metadata_template.xml')
-      Nokogiri::XML(xml)
-    end
-
-    def self.populate_signature_certificate!(xml, cert)
-      encoded_cert = encode_certificate(cert)
-
-      xml.xpath(XPATH_SIG_CERT_ELEMENT)[0].content = encoded_cert
-    end
-
-    def self.populate_key_descriptor_certificate!(xml, use, cert)
-      encoded_cert = encode_certificate(cert)
-
-      cert_element = xml.xpath(format(XPATH_CERT_ELEMENT, use))[0]
-      cert_element.content = encoded_cert
-    end
-
-    def self.encode_certificate(cert)
-      cert = OpenSSL::X509::Certificate.new(IO.read(cert))
-      Base64.encode64(cert.to_der).delete("\n")
-    end
-
-    def self.populate_attribute!(xml, xpath, value)
-      xml.xpath(xpath)[0].value = value
-    end
-
-    def self.sign_document(xml, key)
-      private_key = OpenSSL::PKey::RSA.new(IO.read(key))
-
-      unsigned_document = Xmldsig::SignedDocument.new(xml)
-      unsigned_document.sign(private_key)
-    end
-
-    def self.validate_signature(xml, crt)
-      certificate = OpenSSL::X509::Certificate.new(IO.read(crt))
-      signed_document = Xmldsig::SignedDocument.new(xml)
-      signed_document.validate do |signature_value, data|
-        certificate.public_key.verify(OpenSSL::Digest::SHA256.new, signature_value, data)
+      key = OpenSSL::PKey::RSA.new(IO.read(signing_key))
+      Saml::Util.sign_xml(entity_descriptor) do |data, signature_algorithm|
+        key.sign(digest_method(signature_algorithm).new, data)
       end
     end
 
-    def self.validate_metadata(xml)
-      Saml::Elements::EntityDescriptor.parse(xml, single: true)
+    def self.digest_method(signature_algorithm)
+      digest = signature_algorithm && signature_algorithm =~ /sha(.*?)$/i && $1.to_i
+      case digest
+        when 256 then
+          OpenSSL::Digest::SHA256
+        else
+          OpenSSL::Digest::SHA1
+      end
     end
+    private_class_method :digest_method
 
     def self.write_xml(xml, path)
       File.open(path, 'w:UTF-8') do |f|
         f.write xml
       end
     end
+    private_class_method :write_xml
   end
 end
