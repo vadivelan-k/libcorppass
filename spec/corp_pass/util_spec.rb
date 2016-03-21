@@ -28,4 +28,39 @@ RSpec.describe CorpPass::Util do
         .to raise_error ArgumentError
     end
   end
+
+  describe 'Warden Throwing' do
+    include CorpPass::Test::RackHelper
+
+    after(:each) do
+      CorpPass::Test::Config.reset_configuration!
+    end
+
+    it 'expect failure app to be called when throwing warden' do
+      failure_app = double(:failure_app)
+      CorpPass.configuration.failure_app = failure_app
+
+      expect(failure_app).to receive(:call)
+      app = lambda do |_env|
+        CorpPass::Util.throw_exception(CorpPass::Error.new, CorpPass::WARDEN_SCOPE)
+      end
+      setup_rack(app).call(env_with_params('/'))
+    end
+
+    it 'expect :warden_options and :authentication_error? to find errors thrown by :throw_warden' do
+      failure_app = lambda do |env|
+        warden_options = CorpPass::Util.warden_options(env)
+        expect(warden_options).to be_a(Hash)
+        expect(CorpPass::Util.authentication_error?(warden_options)).to be true
+        expect(warden_options).to include(type: :exception, scope: CorpPass::WARDEN_SCOPE,
+                                          exception: instance_of(CorpPass::Error))
+        CorpPass::Test::RackHelper::FAILURE_RESPONSE
+      end
+      CorpPass.configuration.failure_app = failure_app
+      app = lambda do |_env|
+        CorpPass::Util.throw_exception(CorpPass::Error.new, CorpPass::WARDEN_SCOPE)
+      end
+      setup_rack(app).call(env_with_params('/'))
+    end
+  end
 end
