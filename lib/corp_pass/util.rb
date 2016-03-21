@@ -1,5 +1,7 @@
 module CorpPass
   module Util
+    # Converts <tt>['true', 'false']</tt> +String+ objects into +Boolean+ objects.
+    # @return [Boolean]
     def self.string_to_boolean(value, true_string: 'true', false_string: 'false')
       return value if [true, false].include? value
       return true if value.casecmp(true_string) == 0

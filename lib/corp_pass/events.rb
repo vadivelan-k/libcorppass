@@ -1,4 +1,7 @@
 module CorpPass
+  # Events and log levels for {CorpPass::Logger}.
+  #
+  # See: {CorpPass::Logger}
   module Events
     PREFIX = /corp_pass\.(.+)/
 
@@ -43,16 +46,18 @@ module CorpPass
       ::Logger::FATAL => []
     }.freeze
 
-    # The hash above is sorted by key (log levels, which are integers) in a descending order,
-    # converted back to a hash, and then inverted so that the events become the keys
-    # Then, when we look up a log level, we can do one lookup (only the key) instead of a (key, value) pair
-    # then find the value when we need it
+    # {LOG_LEVELS} is sorted by key (log levels, which are integers) in a descending order,
+    # converted back to a Hash, and then inverted so that the events become the keys.
+    # Then, when we look up a log level, we can do one lookup with only the key (instead of using a (key, value) pair
+    # to find the value when we need it, which is slower).
     LOG_LEVELS_INVERTED = LOG_LEVELS.sort.reverse!.to_h.invert.freeze
 
+    # @param name [String]
     def self.extract_class(name)
       name.split('.')[1]
     end
 
+    # @param name [String]
     def self.extract_event(name)
       name.split('.')[2..-1].join('.')
     end

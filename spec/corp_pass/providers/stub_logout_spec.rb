@@ -25,6 +25,7 @@ RSpec.describe CorpPass::Providers::StubLogout do
 
     it 'does not implement IDP initiated LogoutRequest handling' do
       expect { subject.slo_response_redirect(nil) }.to raise_error(NotImplementedError)
+      expect { subject.parse_logout_request(nil) }.to raise_error(NotImplementedError)
     end
   end
 end

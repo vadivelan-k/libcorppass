@@ -1,6 +1,8 @@
 module CorpPass
   module Providers
-    # To be included in a provider to provide stub logout
+    # To be included in a provider to provide stub logout for test. Will be automatically
+    # injected by {CorpPass.make_provider} into your provider if SLO is not enabled in
+    # configuration. This class creates junk logout responses and skips validations on those.
     module StubLogout
       def slo_request_redirect(_name_id)
         destination = sp.single_logout_service_url(Saml::ProtocolBinding::HTTP_REDIRECT)
@@ -9,6 +11,15 @@ module CorpPass
       end
 
       def slo_response_redirect(_logout_request)
+        fail NotImplementedError
+      end
+
+      def parse_logout_response(_request)
+        destination = idp.single_logout_service_url(Saml::ProtocolBinding::HTTP_REDIRECT)
+        make_stub_logout_response(destination)
+      end
+
+      def parse_logout_request(_request)
         fail NotImplementedError
       end
 
