@@ -26,6 +26,8 @@ module CorpPass
   require 'corp_pass/providers/actual'
   require 'corp_pass/providers/stub_logout'
 
+  require 'corp_pass/metadata'
+
   include CorpPass::Notification
 
   WARDEN_SCOPE = :corp_pass
