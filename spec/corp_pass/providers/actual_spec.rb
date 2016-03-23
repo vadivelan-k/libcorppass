@@ -214,19 +214,6 @@ RSpec.describe CorpPass::Providers::Actual do
                            exception: instance_of(CorpPass::InvalidUser))
       end
     end
-
-    describe :test_authentication! do
-      it 'returns a string of the thrown hash' do
-        stub_request(:any, artifact_resolution_url).to_timeout
-        exception_message = 'execution expired'
-        expected = {
-          type: :exception,
-          scope: :corp_pass,
-          exception: ::Timeout::Error.new(exception_message)
-        }
-        expect(subject.test_authentication!).to eq(expected.to_s + "\nException: #{exception_message}")
-      end
-    end
   end
 
   describe 'Authentication with Warden' do
