@@ -100,12 +100,6 @@ module CorpPass
       def configuration
         CorpPass.configuration
       end
-
-      # Return a string to print to the console
-      # @abstract
-      def test_authentication!
-        raise NotImplementedError # rubocop:disable Style/SignalException
-      end
     end
   end
 end

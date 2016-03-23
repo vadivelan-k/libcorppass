@@ -147,29 +147,6 @@ module CorpPass
         success! user
       end
 
-      # You should expect an Artifact Resolution failure with no message for a successful connection
-      def test_authentication!
-        stub_request = Class.new do
-          def params
-            { 'SAMLart' => 'foobar' }
-          end
-        end
-
-        message = catch(:warden) do
-          resolve_artifact!(stub_request.new)
-          'Successfully resolved artifact.'
-        end
-
-        if message.is_a?(Hash) && message[:type] == :exception
-          exception = message[:exception]
-          message = message.to_s
-          message << "\nException: #{exception}"
-          message << "\nXML: #{exception.xml}" if exception.respond_to?(:xml)
-        end
-
-        message.to_s
-      end
-
       # List of network exceptions. Artifact resolution is retried when one of these exceptions is
       # caught in {#resolve_artifact!}.
       NETWORK_EXCEPTIONS = [::Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
