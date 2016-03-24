@@ -99,10 +99,10 @@ module CorpPass
     end
 
     class ArtifactResolutionFailure < CorpPass::Error
-      attr_reader :xml
-      def initialize(message, xml)
+      attr_reader :response
+      def initialize(message, response)
         super(message)
-        @xml = xml
+        @response = response
       end
     end
 
@@ -158,8 +158,7 @@ module CorpPass
       # @param retrying_attempt [Boolean] whether the resolution is a retry attempt. +resolve_artifact!+ will only
       #                                   retry at most once.
       def resolve_artifact!(request, retrying_attempt = false) # rubocop:disable Metrics/AbcSize
-        response = Saml::Bindings::HTTPArtifact.resolve(request, artifact_resolution_url, {}, proxy)
-        check_response!(response)
+        check_response!(Saml::Bindings::HTTPArtifact.resolve(request, artifact_resolution_url, {}, proxy))
       rescue *NETWORK_EXCEPTIONS => e
         if retrying_attempt
           notify(CorpPass::Events::NETWORK_ERROR, "Network error resolving artifact: #{e}")
@@ -172,7 +171,8 @@ module CorpPass
         notify(CorpPass::Events::SAML_ERROR, "Saml Error: #{e.class.name} - #{e}")
         CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
       rescue ArtifactResolutionFailure => e
-        notify(CorpPass::Events::ARTIFACT_RESOLUTION_FAILURE, "Artifact resolution failure: #{e.xml}")
+        notify(CorpPass::Events::ARTIFACT_RESOLUTION_FAILURE,
+               "Artifact resolution failure: #{e.response.try(:to_xml) || e.response.to_s}")
         CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
       rescue SamlResponseValidationFailure => e
         notify(CorpPass::Events::SAML_RESPONSE_VALIDATION_FAILURE,
@@ -186,7 +186,7 @@ module CorpPass
       def check_response!(response)
         unless response.try(:success?)
           raise ArtifactResolutionFailure.new('Artifact resolution failed', # rubocop:disable Style/SignalException
-                                              response.try(:to_xml))
+                                              response)
         end
         response_xml = notify(CorpPass::Events::SAML_RESPONSE, response.to_xml)
         cp_response = CorpPass::Response.new(response)
