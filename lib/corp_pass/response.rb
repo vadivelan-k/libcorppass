@@ -59,17 +59,8 @@ module CorpPass
       attributes.length > 1
     end
 
-    def tp_auth_access
-      return nil unless third_party?
-      fail NotImplementedError
-    end
-
     def cp_user
       @cp_user ||= CorpPass::User.new(auth_access)
-    end
-
-    def cp_tp_user
-      fail NotImplementedError
     end
 
     delegate :to_xml, to: :saml_response

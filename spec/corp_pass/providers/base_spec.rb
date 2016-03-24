@@ -38,4 +38,12 @@ RSpec.describe CorpPass::Providers::Base do
     expect(parsed.issuer).to eq(@sp_entity)
     expect(parsed.destination).to eq(destination)
   end
+
+  describe 'Abstract methods' do
+    it { expect { subject.sso_idp_initiated_url }.to raise_error(NotImplementedError) }
+    it { expect { subject.slo_request_redirect('foobar') }.to raise_error(NotImplementedError) }
+    it { expect { subject.slo_response_redirect('foobar') }.to raise_error(NotImplementedError) }
+    it { expect { subject.warden_strategy_name }.to raise_error(NotImplementedError) }
+    it { expect { subject.warden_strategy }.to raise_error(NotImplementedError) }
+  end
 end
