@@ -5,19 +5,15 @@ require 'saml'
 module CorpPass
   module Metadata
     def self.generate(entity_id:, acs:, slo:, # rubocop:disable Metrics/ParameterLists
-                      encryption_crt:, signing_key:, signing_crt:)
+                      encryption_crt:, signing_key:, signing_crt:, sign_document: true)
       entity_descriptor = Saml::Elements::EntityDescriptor.new(entity_id: entity_id)
       entity_descriptor.sp_sso_descriptor = make_sp_descriptor(acs, encryption_crt, signing_crt, slo)
 
-      key = OpenSSL::PKey::RSA.new(IO.read(signing_key))
-      signed = Saml::Util.sign_xml(entity_descriptor) do |data, signature_algorithm|
-        key.sign(digest_method(signature_algorithm).new, data)
+      if sign_document
+        sign_document(entity_descriptor, signing_crt, signing_key)
+      else
+        entity_descriptor.to_xml
       end
-
-      unless verify_signature(signed, OpenSSL::X509::Certificate.new(IO.read(signing_crt)))
-        fail 'Signature verification failed'
-      end
-      signed
     end
 
     def self.generate_file(**args)
@@ -43,6 +39,19 @@ module CorpPass
         OpenSSL::Digest::SHA1
       end
     end
+
+    def self.sign_document(document, signing_crt, signing_key)
+      key = OpenSSL::PKey::RSA.new(IO.read(signing_key))
+      signed = Saml::Util.sign_xml(document) do |data, signature_algorithm|
+        key.sign(digest_method(signature_algorithm).new, data)
+      end
+
+      unless verify_signature(signed, OpenSSL::X509::Certificate.new(IO.read(signing_crt)))
+        fail 'Signature verification failed'
+      end
+      signed
+    end
+    private_class_method :sign_document
 
     def self.make_sp_descriptor(acs, encryption_crt, signing_crt, slo)
       sp_descriptor = Saml::Elements::SPSSODescriptor.new(authn_requests_signed: true, want_assertions_signed: true)
