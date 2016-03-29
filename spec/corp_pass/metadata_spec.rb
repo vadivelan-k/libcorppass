@@ -44,6 +44,12 @@ RSpec.describe CorpPass::Metadata do
     expect(encryption_descriptor.certificate.to_text).to eq(encryption_certificate.to_text)
   end
 
+  specify ':generate can generate a document without a signature' do
+    metadata = subject.generate(**@args.merge(sign_document: false))
+    signed_document = Xmldsig::SignedDocument.new(metadata)
+    expect(signed_document.signatures).to be_empty
+  end
+
   specify ':verify_signature verifies signature properly' do
     # The unicode characters are intentional
     unsigned = Saml::Response.new(in_response_to: 'αλ', status: Saml::TopLevelCodes::SUCCESS)
