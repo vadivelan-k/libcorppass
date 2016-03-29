@@ -10,7 +10,7 @@ module CorpPass
       entity_descriptor.sp_sso_descriptor = make_sp_descriptor(acs, encryption_crt, signing_crt, slo)
 
       if sign_document
-        sign_document(entity_descriptor, signing_crt, signing_key)
+        sign(entity_descriptor, signing_crt, signing_key)
       else
         entity_descriptor.to_xml
       end
@@ -40,7 +40,7 @@ module CorpPass
       end
     end
 
-    def self.sign_document(document, signing_crt, signing_key)
+    def self.sign(document, signing_crt, signing_key)
       key = OpenSSL::PKey::RSA.new(IO.read(signing_key))
       signed = Saml::Util.sign_xml(document) do |data, signature_algorithm|
         key.sign(digest_method(signature_algorithm).new, data)
@@ -51,7 +51,7 @@ module CorpPass
       end
       signed
     end
-    private_class_method :sign_document
+    private_class_method :sign
 
     def self.make_sp_descriptor(acs, encryption_crt, signing_crt, slo)
       sp_descriptor = Saml::Elements::SPSSODescriptor.new(authn_requests_signed: true, want_assertions_signed: true)
