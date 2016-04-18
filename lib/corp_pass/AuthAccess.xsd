@@ -29,7 +29,7 @@
                             <xs:complexType>
                               <xs:sequence>
                                 <xs:element type="xs:string" name="CPEntID_SUB" maxOccurs="1" minOccurs="0"/>
-                                <xs:element type="xs:string" name="CPRole" maxOccurs="1" minOccurs="0"/>
+                                <xs:element type="xs:string" name="CPRole" maxOccurs="1" minOccurs="1"/>
                                 <xs:element type="xs:date" name="StartDate" maxOccurs="1" minOccurs="1"/>
                                 <xs:element type="xs:date" name="EndDate" maxOccurs="1" minOccurs="1"/>
                                 <xs:element name="Parameter" maxOccurs="8" minOccurs="0">
