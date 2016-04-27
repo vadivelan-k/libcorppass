@@ -198,14 +198,23 @@ module CorpPass
 
   def self.setup_serializer
     Warden::Manager.serialize_into_session(WARDEN_SCOPE) do |user|
-      [user.class.name, user.serialize]
+      CorpPass.serialize_user(user)
     end
 
     Warden::Manager.serialize_from_session(WARDEN_SCOPE) do |serialized|
-      klass, serialized_data = serialized
-      klass.constantize.deserialize serialized_data
+      CorpPass.deserialize_user(serialized)
     end
   end
+
+  def self.deserialize_user(serialized)
+    klass, serialized_data = serialized
+    klass.constantize.deserialize serialized_data
+  end
+
+  def self.serialize_user(user)
+    [user.class.name, user.serialize]
+  end
+
   private_class_method :setup_serializer
 
   def self.setup_default_strategy
