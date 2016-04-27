@@ -14,6 +14,7 @@ module CorpPass
     SAML_ERROR = 'saml_error'.freeze
     ARTIFACT_RESOLUTION_FAILURE = 'artifact_resolution_failure'.freeze
     SAML_RESPONSE_VALIDATION_FAILURE = 'saml_response_validation_failure'.freeze
+    MISSING_ASSERTION = 'missing_assertion'.freeze
 
     # Provider
     SSO_IDP_INITIATED_URL = 'sso_idp_initiated_url'.freeze
@@ -42,7 +43,8 @@ module CorpPass
       ::Logger::INFO => [LOGIN_SUCCESS, INACTIVITY_TIMEOUT, SESSION_TIMEOUT],
       ::Logger::WARN => [RETRY_AUTHENTICATION],
       ::Logger::ERROR => [INVALID_USER, LOGIN_FAILURE, NETWORK_ERROR, SAML_ERROR, ARTIFACT_RESOLUTION_FAILURE,
-                          RESPONSE_VALIDATION_FAILURE, SAML_RESPONSE_VALIDATION_FAILURE, USER_VALIDATION_FAILURE],
+                          RESPONSE_VALIDATION_FAILURE, SAML_RESPONSE_VALIDATION_FAILURE, USER_VALIDATION_FAILURE,
+                          MISSING_ASSERTION],
       ::Logger::FATAL => []
     }.freeze
 

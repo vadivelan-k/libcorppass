@@ -157,8 +157,9 @@ module CorpPass
       # @param request [Rack::Request] A +Rack::Request+-like object
       # @param retrying_attempt [Boolean] whether the resolution is a retry attempt. +resolve_artifact!+ will only
       #                                   retry at most once.
-      def resolve_artifact!(request, retrying_attempt = false) # rubocop:disable Metrics/AbcSize
-        check_response!(Saml::Bindings::HTTPArtifact.resolve(request, artifact_resolution_url, {}, proxy))
+      def resolve_artifact!(request, retrying_attempt = false) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+        saml_response = Saml::Bindings::HTTPArtifact.resolve(request, artifact_resolution_url, {}, proxy)
+        check_response!(saml_response)
       rescue *NETWORK_EXCEPTIONS => e
         if retrying_attempt
           notify(CorpPass::Events::NETWORK_ERROR, "Network error resolving artifact: #{e}")
@@ -177,6 +178,9 @@ module CorpPass
       rescue SamlResponseValidationFailure => e
         notify(CorpPass::Events::SAML_RESPONSE_VALIDATION_FAILURE,
                "SamlResponse Validation failed failure: #{e.message} \n#{e.xml}")
+        CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
+      rescue CorpPass::MissingAssertionError => e
+        notify(CorpPass::Events::MISSING_ASSERTION, "SAML response is missing assertion: #{e}")
         CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
       end
 

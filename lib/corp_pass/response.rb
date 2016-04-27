@@ -4,6 +4,8 @@ require 'corp_pass'
 require 'corp_pass/user'
 
 module CorpPass
+  class MissingAssertionError < CorpPass::Error; end
+
   # The purpose of this class is to retrieve the Subject and User/Third Party Authorization XML Values
   class Response
     include CorpPass::Notification
@@ -36,7 +38,11 @@ module CorpPass
     delegate :assertions, to: :saml_response
 
     def assertion
-      assertions.first
+      assertion = assertions.first
+      if assertion.nil?
+        fail MissingAssertionError.new, "Missing assertion in assertions SAML response:  #{saml_response.to_xml}"
+      end
+      assertion
     end
 
     delegate :attribute_statement, to: :assertion
