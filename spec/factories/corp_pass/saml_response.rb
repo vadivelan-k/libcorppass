@@ -12,6 +12,12 @@ FactoryGirl.define do
       end
     end
 
+    trait :no_assertion do
+      transient do
+        xml_path 'spec/fixtures/corp_pass/saml_response_no_assertion.xml'
+      end
+    end
+
     initialize_with { Saml::Response.parse File.read(xml_path) }
 
     trait :encrypt_id do

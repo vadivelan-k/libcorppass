@@ -1,0 +1,10 @@
+<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ID="_cfabc572bd5b537c0e5d08cb9096a06aaf832e7667"
+                Version="2.0" IssueInstant="2015-11-30T04:42:31Z"
+                Destination="https://sp.example.com/saml/acs">
+  <saml:Issuer>https://idp.example.com/saml2/idp/metadata</saml:Issuer>
+  <samlp:Status>
+    <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
+  </samlp:Status>
+</samlp:Response>

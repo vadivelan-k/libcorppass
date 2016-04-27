@@ -174,6 +174,18 @@ RSpec.describe CorpPass::Providers::Actual do
                                       type: :exception)
         end
       end
+
+      context 'MissingAssertionError' do
+        it 'throws :warden if the SAML response has no assertions' do
+          expect(Saml::Bindings::HTTPArtifact).to receive(:resolve) do |_, _|
+            create(:saml_response, :no_assertion)
+          end
+          expect { subject.resolve_artifact!(double(:request)) }
+            .to throw_symbol(:warden,
+                             scope: CorpPass::WARDEN_SCOPE, type: :exception,
+                             exception: instance_of(CorpPass::MissingAssertionError))
+        end
+      end
     end
 
     describe :check_response! do
