@@ -28,7 +28,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'actionpack', '~> 4.2'
   spec.add_development_dependency 'timecop', '~> 0.8'
   spec.add_development_dependency 'simplecov'
-  spec.add_development_dependency 'byebug'
 
   spec.add_dependency 'activesupport', '~> 4.2'
   spec.add_dependency 'libsaml', '~> 2.20', '>= 2.20.6'

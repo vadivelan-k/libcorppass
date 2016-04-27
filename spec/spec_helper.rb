@@ -2,7 +2,6 @@ require 'factory_girl'
 require 'warden/test/mock'
 require 'rack'
 require 'webmock/rspec'
-require 'byebug'
 
 require 'simplecov'
 SimpleCov.start
