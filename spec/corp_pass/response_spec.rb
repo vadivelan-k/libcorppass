@@ -96,11 +96,6 @@ RSpec.describe CorpPass::Response do
       expect(subject.errors).to include('No valid subject confirmation found')
     end
 
-    it 'validates Subject NameID properly' do
-      expected = '<NameID>/<EncryptedNameID> in <saml:Subject> was foobar, but <CPUID> in <AuthAccess> is S1234567A'
-      expect(subject.errors).to include(expected)
-    end
-
     it 'raises an exception if SAML assertion is missing' do
       expect { CorpPass::Response.new(create(:saml_response, :no_assertion)) }
         .to raise_error(CorpPass::MissingAssertionError)

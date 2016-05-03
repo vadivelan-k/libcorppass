@@ -111,7 +111,6 @@ module CorpPass
       validate_issuer(assertion.issuer, '<saml:Assertion>')
       validate_conditions
       validate_subject_confirmation
-      validate_name_id
     end
 
     def validate_conditions
@@ -166,18 +165,6 @@ module CorpPass
       end
 
       @errors << 'No valid subject confirmation found' unless valid_subject_confirmation
-    end
-
-    def validate_name_id
-      if name_id.nil?
-        @errors << 'Missing <NameID> or <EncryptedNameID>, or decryption of <EncryptedNameID> has failed'
-        return
-      end
-
-      unless name_id == cp_user.user_id
-        @errors << "<NameID>/<EncryptedNameID> in <saml:Subject> was #{name_id}, "\
-                   "but <CPUID> in <AuthAccess> is #{cp_user.user_id}"
-      end
     end
 
     def validate_issuer(issuer, context)
