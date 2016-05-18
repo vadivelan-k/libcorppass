@@ -55,7 +55,7 @@ module CorpPass
 
     def self.make_sp_descriptor(acs, encryption_crt, signing_crt, slo)
       sp_descriptor = Saml::Elements::SPSSODescriptor.new(authn_requests_signed: true, want_assertions_signed: true)
-      sp_descriptor.add_assertion_consumer_service(Saml::ProtocolBinding::HTTP_REDIRECT, acs, 0, true)
+      sp_descriptor.add_assertion_consumer_service(Saml::ProtocolBinding::HTTP_ARTIFACT, acs, 0, true)
       sp_descriptor.single_logout_services << Saml::ComplexTypes::
               SSODescriptorType::SingleLogoutService.new(binding: Saml::ProtocolBinding::HTTP_REDIRECT, location: slo)
 
