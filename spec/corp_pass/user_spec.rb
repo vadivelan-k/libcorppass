@@ -15,7 +15,7 @@ RSpec.describe CorpPass::User do
     expect(deserialized).to eq(user)
   end
 
-  it { expect(subject.xml_document).to eq(File.read('spec/fixtures/corp_pass/auth_access.xml')) }
+  it { expect(subject.auth_access).to eq(File.read('spec/fixtures/corp_pass/auth_access.xml')) }
   it { expect(subject.id).to eq('foobar') }
   it { expect(subject.user_account_type).to eq('User') }
   it { expect(subject.user_id).to eq('S1234567A') }

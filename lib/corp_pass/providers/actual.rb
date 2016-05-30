@@ -136,7 +136,7 @@ module CorpPass
       def authenticate!
         response = resolve_artifact!(request)
         user = response.cp_user
-        notify(CorpPass::Events::AUTH_ACCESS, user.xml_document)
+        notify(CorpPass::Events::AUTH_ACCESS, user.auth_access)
         begin
           user.validate!
         rescue CorpPass::InvalidUser => e

@@ -21,22 +21,22 @@ module CorpPass
   class User
     include CorpPass::Notification
 
-    attr_reader :xml_document
+    attr_reader :auth_access
     attr_reader :errors
 
-    def initialize(xml_document)
-      load_document xml_document
+    def initialize(auth_access)
+      load_document auth_access
       @errors = []
     end
 
-    def load_document(xml_document)
-      @xml_document = xml_document
+    def load_document(auth_access)
+      @auth_access = auth_access
     end
 
     # Returns the XML document backing this {User}.
     # @return [Array<String>]
     def serialize
-      [xml_document]
+      [auth_access]
     end
 
     # Deserializes a {User} from an XML document.
@@ -49,7 +49,7 @@ module CorpPass
     # Returns the +Nokogiri::XML+ document backing this {User}.
     # @return [Nokogiri::XML]
     def document
-      @document ||= Nokogiri::XML(@xml_document)
+      @document ||= Nokogiri::XML(@auth_access)
     end
 
     delegate :root, to: :document
@@ -74,7 +74,7 @@ module CorpPass
       unless validate
         # Disabling the cop because they cannot make up their mind on this!
         # And `fail` does not allow for extra parameters
-        raise CorpPass::InvalidUser.new(@errors.join('; '), xml_document) # rubocop:disable Style/SignalException
+        raise CorpPass::InvalidUser.new(@errors.join('; '), auth_access) # rubocop:disable Style/SignalException
       end
       true
     end
@@ -189,7 +189,7 @@ module CorpPass
     protected
 
     def state
-      [xml_document]
+      [auth_access]
     end
 
     private
