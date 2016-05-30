@@ -190,11 +190,13 @@ module CorpPass
     end
 
     def decrypt_encrypted_id
-      encrypted_id = subject.encrypted_id
-      unless encrypted_id.nil?
-        decrypted = Saml::Util.decrypt_encrypted_id(encrypted_id, CorpPass.encryption_key)
-        notify(CorpPass::Events::DECRYPTED_ID, decrypted.to_xml)
-        decrypted.try(:name_id).try(:value)
+      @decrypted_id ||= begin
+        encrypted_id = subject.encrypted_id
+        unless encrypted_id.nil?
+          decrypted = Saml::Util.decrypt_encrypted_id(encrypted_id, CorpPass.encryption_key)
+          notify(CorpPass::Events::DECRYPTED_ID, decrypted.to_xml)
+          decrypted
+        end
       end
     end
   end

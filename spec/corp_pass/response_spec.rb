@@ -41,7 +41,7 @@ RSpec.describe CorpPass::Response do
       it { expect(subject.twofa?).to be false }
       it 'returns true when presented with the appropriate AuthnContextClassRef' do
         expect(subject).to receive(:authn_context_class_refs)
-            .and_return([Saml::ClassRefs::PASSWORD, Saml::ClassRefs::MOBILE_TWO_FACTOR_UNREGISTERED])
+          .and_return([Saml::ClassRefs::PASSWORD, Saml::ClassRefs::MOBILE_TWO_FACTOR_UNREGISTERED])
         expect(subject.twofa?).to be true
       end
     end
