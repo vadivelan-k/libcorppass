@@ -13,6 +13,9 @@ module CorpPass
     AUTH_ACCESS_NAME = 'AuthAccess'.freeze
     TP_AUTH_ACCESS_NAME = 'TPAuthAccess'.freeze
 
+    TWOFA_AUTHN_CLASSREFS = [Saml::ClassRefs::MOBILE_TWO_FACTOR_UNREGISTERED,
+                             Saml::ClassRefs::TIME_SYNC_TOKEN].freeze
+
     attr_reader :saml_response
     attr_reader :errors
 
@@ -52,7 +55,7 @@ module CorpPass
     # Not sure if CorpPass is going to return anything to us here.
     # Leaving it here for now
     def name_id
-      @name_id ||= (subject._name_id.try(:value) || decrypt_encrypted_id)
+      @name_id ||= (subject._name_id.try(:value) || decrypt_encrypted_id.try(:name_id).try(:value))
     end
 
     delegate :attributes, to: :attribute_statement
@@ -72,6 +75,18 @@ module CorpPass
     delegate :to_xml, to: :saml_response
 
     delegate :to_s, to: :saml_response
+
+    delegate :authn_statement, to: :assertion
+
+    def authn_context_class_refs
+      authn_statement.map do |statement|
+        statement.authn_context.authn_context_class_ref
+      end
+    end
+
+    def twofa?
+      (authn_context_class_refs & TWOFA_AUTHN_CLASSREFS).any?
+    end
 
     private
 
