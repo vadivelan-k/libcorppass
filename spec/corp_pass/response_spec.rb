@@ -22,10 +22,10 @@ RSpec.describe CorpPass::Response do
     it { expect(subject.valid?).to be true }
     it { expect(subject.success?).to be true }
     it { expect(subject.errors).to be_empty }
-    it { expect { subject.assertions }.to_not raise_error }
-    it { expect { subject.assertion }.to_not raise_error }
-    it { expect { subject.attribute_statement }.to_not raise_error }
-    it { expect { subject.subject }.to_not raise_error }
+    it { expect(subject.assertions).to all(be_a(Saml::Assertion)) }
+    it { expect(subject.assertion).to be_a(Saml::Assertion) }
+    it { expect(subject.attribute_statement).to be_a(Saml::Elements::AttributeStatement) }
+    it { expect(subject.subject).to be_a(Saml::Elements::Subject) }
     it { expect(subject.name_id).to eq('S1234567A') }
     it { expect { subject.auth_access }.to_not raise_error }
     it { expect(subject.third_party?).to be false }
@@ -33,6 +33,17 @@ RSpec.describe CorpPass::Response do
     it 'decrypts the assertion successfully' do
       expect(subject.saml_response.encrypted_assertions).to be_empty
       expect(subject.assertion).to be_a(Saml::Assertion)
+    end
+    it { expect(subject.authn_statement).to all(be_a(Saml::Elements::AuthnStatement)) }
+    it { expect(subject.authn_context_class_refs).to eq([Saml::ClassRefs::PASSWORD]) }
+
+    describe '2FA' do
+      it { expect(subject.twofa?).to be false }
+      it 'returns true when presented with the appropriate AuthnContextClassRef' do
+        expect(subject).to receive(:authn_context_class_refs)
+          .and_return([Saml::ClassRefs::PASSWORD, Saml::ClassRefs::MOBILE_TWO_FACTOR_UNREGISTERED])
+        expect(subject.twofa?).to be true
+      end
     end
   end
 
