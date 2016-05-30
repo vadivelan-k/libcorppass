@@ -162,19 +162,6 @@ RSpec.describe CorpPass::Providers::Actual do
         end
       end
 
-      context 'SamlResponseValidationFailure' do
-        let(:exception) { CorpPass::Providers::SamlResponseValidationFailure.new(['Validation failed!'], nil) }
-        it 'throws with the right details' do
-          expect(Saml::Bindings::HTTPArtifact).to receive(:resolve) do |_, _|
-            raise exception # rubocop:disable Style/SignalException)
-          end
-          expect { subject.resolve_artifact!(double(:request)) }
-            .to throw_symbol(:warden, scope: CorpPass::WARDEN_SCOPE,
-                                      exception: exception,
-                                      type: :exception)
-        end
-      end
-
       context 'MissingAssertionError' do
         it 'throws :warden if the SAML response has no assertions' do
           expect(Saml::Bindings::HTTPArtifact).to receive(:resolve) do |_, _|
@@ -197,7 +184,10 @@ RSpec.describe CorpPass::Providers::Actual do
       it 'raises an exception when the SAML Response received is invalid' do
         response = create(:saml_response, :invalid)
         expect(response).to receive(:success?).twice.and_return(true) # Skip the ArtifactResolutionFailure exception
-        expect { subject.check_response!(response) }.to raise_error(CorpPass::Providers::SamlResponseValidationFailure)
+        expect { subject.check_response!(response) }
+          .to throw_symbol(:warden, scope: CorpPass::WARDEN_SCOPE,
+                                    exception: instance_of(CorpPass::Providers::SamlResponseValidationFailure),
+                                    type: :exception)
       end
     end
 

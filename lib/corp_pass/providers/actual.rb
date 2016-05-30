@@ -157,7 +157,7 @@ module CorpPass
       # @param request [Rack::Request] A +Rack::Request+-like object
       # @param retrying_attempt [Boolean] whether the resolution is a retry attempt. +resolve_artifact!+ will only
       #                                   retry at most once.
-      def resolve_artifact!(request, retrying_attempt = false) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      def resolve_artifact!(request, retrying_attempt = false) # rubocop:disable Metrics/AbcSize
         saml_response = Saml::Bindings::HTTPArtifact.resolve(request, artifact_resolution_url, {}, proxy)
         check_response!(saml_response)
       rescue *NETWORK_EXCEPTIONS => e
@@ -175,10 +175,6 @@ module CorpPass
         notify(CorpPass::Events::ARTIFACT_RESOLUTION_FAILURE,
                "Artifact resolution failure: #{e.response.try(:to_xml) || e.response.to_s}")
         CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
-      rescue SamlResponseValidationFailure => e
-        notify(CorpPass::Events::SAML_RESPONSE_VALIDATION_FAILURE,
-               "SamlResponse Validation failed failure: #{e.message} \n#{e.xml}")
-        CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
       rescue CorpPass::MissingAssertionError => e
         notify(CorpPass::Events::MISSING_ASSERTION, "SAML response is missing assertion: #{e}")
         CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
@@ -195,8 +191,10 @@ module CorpPass
         response_xml = notify(CorpPass::Events::SAML_RESPONSE, response.to_xml)
         cp_response = CorpPass::Response.new(response)
         unless cp_response.valid?
-          raise SamlResponseValidationFailure.new(cp_response.errors, # rubocop:disable Style/SignalException
-                                                  response_xml)
+          notify(CorpPass::Events::SAML_RESPONSE_VALIDATION_FAILURE,
+                 "SamlResponse Validation failed failure: #{cp_response.errors} \n#{response_xml}")
+          exception = SamlResponseValidationFailure.new(cp_response.errors, response_xml)
+          CorpPass::Util.throw_exception(exception, CorpPass::WARDEN_SCOPE)
         end
         cp_response
       end
