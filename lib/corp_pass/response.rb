@@ -55,7 +55,7 @@ module CorpPass
     # Not sure if CorpPass is going to return anything to us here.
     # Leaving it here for now
     def name_id
-      @name_id ||= (subject._name_id.try(:value) || decrypt_encrypted_id.try(:name_id).try(:value))
+      @name_id ||= (subject._name_id.try(:value) || decrypt_encrypted_id.try(:value))
     end
 
     delegate :attributes, to: :attribute_statement
@@ -86,6 +86,17 @@ module CorpPass
 
     def twofa?
       (authn_context_class_refs & TWOFA_AUTHN_CLASSREFS).any?
+    end
+
+    # Returns a decrypted assertion with decrypted NameID for serialization purpose
+    def decrypted_assertion
+      @decrypted_assertion ||= begin
+        decrypted_assertion = Saml::Assertion.parse(assertion.to_xml) # clone assertion object
+        decrypted_assertion.subject._name_id = decrypt_encrypted_id
+        decrypted_assertion.subject.encrypted_id = nil
+
+        decrypted_assertion
+      end
     end
 
     private
@@ -195,7 +206,7 @@ module CorpPass
         unless encrypted_id.nil?
           decrypted = Saml::Util.decrypt_encrypted_id(encrypted_id, CorpPass.encryption_key)
           notify(CorpPass::Events::DECRYPTED_ID, decrypted.to_xml)
-          decrypted
+          decrypted.try(:name_id)
         end
       end
     end

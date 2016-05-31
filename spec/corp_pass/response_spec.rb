@@ -45,6 +45,14 @@ RSpec.describe CorpPass::Response do
         expect(subject.twofa?).to be true
       end
     end
+
+    describe 'Serialized Assertion' do
+      it 'returns a decrypted assertion with no encrypted Name ID' do
+        assertion = subject.decrypted_assertion
+        expect(assertion).to be_a(Saml::Assertion)
+        expect(assertion.subject.name_id).to eq('S1234567A')
+      end
+    end
   end
 
   context 'Invalid SAML Response' do
