@@ -1,7 +1,7 @@
 require 'saml'
 
 require 'corp_pass'
-require 'corp_pass/user'
+require 'corp_pass/auth_access'
 
 module CorpPass
   class MissingAssertionError < CorpPass::Error; end
@@ -69,7 +69,7 @@ module CorpPass
     end
 
     def cp_user
-      @cp_user ||= CorpPass::User.new(auth_access)
+      @cp_user ||= CorpPass::AuthAccess.new(auth_access)
     end
 
     delegate :to_xml, to: :saml_response

@@ -1,4 +1,4 @@
-RSpec.describe CorpPass::User do
+RSpec.describe CorpPass::AuthAccess do
   subject { create(:corp_pass_user) }
 
   it 'should compare equality properly' do
@@ -10,7 +10,7 @@ RSpec.describe CorpPass::User do
     user = create(:corp_pass_user)
     serialized = user.serialize
 
-    deserialized = CorpPass::User.deserialize serialized
+    deserialized = CorpPass::AuthAccess.deserialize serialized
 
     expect(deserialized).to eq(user)
   end
@@ -68,7 +68,7 @@ RSpec.describe CorpPass::User do
       end
 
       it { expect(@invalid_user.valid?).to be false }
-      it { expect { @invalid_user.validate! }.to raise_error CorpPass::InvalidUser }
+      it { expect { @invalid_user.validate! }.to raise_error CorpPass::InvalidAuthAccess }
       it { expect(@invalid_user.errors.empty?).to be false }
 
       it 'does not populate :errors before validation is called, and populates after' do

@@ -208,12 +208,12 @@ RSpec.describe CorpPass::Providers::Actual do
 
       it 'throws :warden if the user provided fails validation' do
         expect(response.cp_user).to receive(:validate!) do
-          raise CorpPass::InvalidUser.new('', nil) # rubocop:disable Style/SignalException)
+          raise CorpPass::InvalidAuthAccess.new('', nil) # rubocop:disable Style/SignalException)
         end
         expect { subject.authenticate! }
           .to throw_symbol(:warden,
                            scope: CorpPass::WARDEN_SCOPE, type: :exception,
-                           exception: instance_of(CorpPass::InvalidUser))
+                           exception: instance_of(CorpPass::InvalidAuthAccess))
       end
     end
   end

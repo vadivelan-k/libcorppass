@@ -22,7 +22,7 @@ module CorpPass
   require 'corp_pass/notification'
   require 'corp_pass/response'
   require 'corp_pass/config'
-  require 'corp_pass/user'
+  require 'corp_pass/auth_access'
   require 'corp_pass/providers/actual'
   require 'corp_pass/providers/stub_logout'
 

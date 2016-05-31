@@ -1,5 +1,5 @@
 FactoryGirl.define do
-  factory :corp_pass_user, class: 'CorpPass::User' do
+  factory :corp_pass_user, class: 'CorpPass::AuthAccess' do
     skip_create
 
     transient do
