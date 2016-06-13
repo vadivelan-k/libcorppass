@@ -41,11 +41,8 @@ module CorpPass
     delegate :assertions, to: :saml_response
 
     def assertion
-      assertion = assertions.first
-      if assertion.nil?
-        fail MissingAssertionError.new, "Missing assertion in assertions SAML response:  #{saml_response.to_xml}"
-      end
-      assertion
+      # Already validated that there is only have one assertion in the SAML response
+      assertions.first
     end
 
     delegate :attribute_statement, to: :assertion
@@ -116,12 +113,19 @@ module CorpPass
       validate_issuer(saml_response.issuer, '<samlp:Response>')
     end
 
+    def validate_assertions
+      if assertions.nil? || assertions.empty?
+        fail MissingAssertionError.new, "Missing assertion in assertions SAML response: #{saml_response.to_xml}"
+      end
+    end
+
     def validate_single_assertion
       one_assertion = assertions.length == 1
       @errors << "More than one assertions found: #{assertions.length}" unless one_assertion
     end
 
     def validate_assertion
+      validate_assertions
       validate_single_assertion
       validate_issuer(assertion.issuer, '<saml:Assertion>')
       validate_conditions
