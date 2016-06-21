@@ -1,8 +1,75 @@
 require 'nokogiri'
+require 'xmlmapper'
 require 'corp_pass'
 require 'corp_pass/util'
 
 module CorpPass
+  module Mapping
+    module AuthAccess
+      class AuthParameter
+        include XmlMapper
+
+        tag 'Parameter'
+        content :value
+        attribute :name, String
+      end
+
+      class Auth
+        include XmlMapper
+
+        tag 'Row'
+        element :entity_id_sub, String, tag: 'CPEntID_SUB'
+        element :role, String, tag: 'CPRole'
+        element :start_date, Date, tag: 'StartDate'
+        element :end_date, Date, tag: 'EndDate'
+        has_many :parameters, AuthParameter, tag: 'Parameter'
+      end
+
+      class EService
+        include XmlMapper
+
+        tag 'ESrvc_Result'
+        element :id, String, tag: 'CPESrvcID'
+        element :given_auth_count, Integer, tag: 'Auth_Result_Set/Row_Count'
+        has_many :auths, Auth, tag: 'Auth_Result_Set/Row'
+      end
+
+      module User
+        # Convenience method to return e-services associated with this +User+.
+        #
+        # @return [Hash] All e-services as a +Hash+ with e-service ID
+        #                as the key and e-service details as the value
+        def eservices_to_h
+          Hash[@eservices.map { |eservice| [eservice.id, eservice] }]
+        end
+
+        # Convenience method to return auth info associated with a particular e-service ID for this +User+.
+        #
+        # @param eservice_id the e-service ID to obtain auth info for this +User+
+        #
+        # @return [Array] An +Array+ of +AuthResult+ for the given +eservice_id+ associated with this +User+
+        def auth_results_for(eservice_id)
+          eservices_to_h[eservice_id].auths
+        end
+
+        def self.included(u)
+          u.tag 'AuthAccess'
+          u.element :id, String, tag: 'CPID'
+          u.element :user_account_type, String, tag: 'CPAccType'
+          u.element :user_id, String, tag: 'CPUID'
+          u.element :user_id_country, String, tag: 'CPUID_Country'
+          u.element :user_id_date, Date, tag: 'CPUID_DATE'
+          u.element :entity_id, String, tag: 'CPEntID'
+          u.element :entity_status, String, tag: 'CPEnt_Status'
+          u.element :entity_type, String, tag: 'CPEnt_TYPE'
+          u.element :is_sp_holder_raw, String, tag: 'ISSPHOLDER'
+          u.element :given_eservices_count, Integer, tag: 'Result_Set/ESrvc_Row_Count'
+          u.has_many :eservices, EService, tag: 'Result_Set/ESrvc_Result'
+        end
+      end
+    end
+  end
+
   # An +Error+ object raised on creation of a {User} with invalid XML.
   #
   # See: {User}
@@ -19,18 +86,44 @@ module CorpPass
   end
 
   class User
+    include XmlMapper
+    include CorpPass::Mapping::AuthAccess::User
     include CorpPass::Notification
 
     attr_reader :auth_access
     attr_reader :errors
 
-    def initialize(auth_access)
-      load_document auth_access
+    def initialize(auth_access = nil)
       @errors = []
+
+      if !auth_access.nil?
+        @auth_access = auth_access
+        parse(auth_access) if xml_valid?
+      end
     end
 
-    def load_document(auth_access)
-      @auth_access = auth_access
+    def ==(other)
+      other.class == self.class && other.auth_access == auth_access
+    end
+    alias eql? ==
+
+    # Maps the `ISSPHOLDER` field with the mapping { YES => true, NO => false }
+    # @return [Boolean] Whether this {User} is also a SingPass holder
+    def sp_holder?
+      CorpPass::Util.string_to_boolean(@is_sp_holder_raw, true_string: 'yes', false_string: 'no')
+    end
+
+    # Returns the +Nokogiri::XML+ document backing this {User}. The document is memoized.
+    # @return [Nokogiri::XML]
+    def document
+      @document ||= Nokogiri::XML(auth_access)
+    end
+
+    # Returns the +Nokogiri::XML::Schema+ backing the user. The XSD is memoized.
+    # @return [Nokogiri::XML::Schema]
+    def xsd
+      # File I/O considered expensive
+      @xsd_memo ||= Nokogiri::XML::Schema(File.read(File.dirname(__FILE__) + '/AuthAccess.xsd'))
     end
 
     # Returns the XML document backing this {User}.
@@ -46,32 +139,24 @@ module CorpPass
       new(xml)
     end
 
-    # Returns the +Nokogiri::XML+ document backing this {User}.
-    # @return [Nokogiri::XML]
-    def document
-      @document ||= Nokogiri::XML(@auth_access)
-    end
-
-    delegate :root, to: :document
-
-    # Returns whether this {User} is valid.
-    # @return [Boolean]
-    def validate
+    # Checks whether this user is backed by a valid XML
+    # @return [Boolean] Whether this +User+ is valid
+    def valid?
+      @errors = []
       return false unless xml_valid?
       return false unless xsd_valid?
       valid_root?
       valid_entity_status?
-      single_eservice_result?
-      eservice_results
+      valid_eservice_results?
 
       errors.each { |error| notify(CorpPass::Events::USER_VALIDATION_FAILURE, error) }
       errors.empty?
     end
-    alias valid? validate
 
     # Validates this {User}, raising an {InvalidUser} error if invalid.
+    # @return [Boolean] `true` if valid, else an {InvalidUser} error is raised
     def validate!
-      unless validate
+      unless valid?
         # Disabling the cop because they cannot make up their mind on this!
         # And `fail` does not allow for extra parameters
         raise CorpPass::InvalidUser.new(@errors.join('; '), auth_access) # rubocop:disable Style/SignalException
@@ -79,179 +164,59 @@ module CorpPass
       true
     end
 
-    # Returns whether the XML backing this user has errors. Note that this method does not
+    # Returns whether the XML backing this +User+ has errors. Note that this method does not
     # validate the XML against the namespace defined in the specification due to inconsistencies
     # found between that and the actual XML response.
     #
     # Also adds any errors found in the XML to the instance variable +@errors+.
     #
-    # @return [Boolean]
+    # @return [Boolean] Whether the XML is valid
     def xml_valid?
-      @xml_valid ||= begin
-        valid = document.errors.empty?
-        @errors << "Invalid XML Document: #{document.errors.map(&:to_s).join('; ')}" unless valid
-        valid
-      end
+      valid = document.errors.empty?
+      @errors << "Invalid XML Document: #{document.errors.map(&:to_s).join('; ')}" unless valid
+      valid
     end
 
+    # Returns whether the XML backing this +User+ conforms to the expected AuthAccess XSD.
+    #
+    # Also adds any errors found in the XML to the instance variable +@errors+.
+    #
+    # @return [Boolean] Whether the XML validates against the expected AuthAccess XSD
     def xsd_valid?
-      @xsd_valid ||= begin
-                       xsd_errors = xsd.validate(document)
-                       unless xsd_errors.empty?
-                         @errors << "XSD Validation failed: #{xsd_errors.map(&:message).join('; ')}"
-                       end
-                       xsd_errors.empty?
-                     end
+      xsd_errors = xsd.validate(document)
+      @errors << "XSD Validation failed: #{xsd_errors.map(&:message).join('; ')}" unless xsd_errors.empty?
+      xsd_errors.empty?
     end
 
-    def xsd
-      Nokogiri::XML::Schema(File.read(File.dirname(__FILE__) + '/AuthAccess.xsd'))
-    end
-
+    # Returns whether the XML backing this +User+ has a valid XML root element.
+    #
+    # Also adds any errors found in the XML to the instance variable +@errors+.
+    #
+    # @returns [Boolean]
     def valid_root?
-      @valid_root ||= begin
-                        valid = (root.name == CorpPass::Response::AUTH_ACCESS_NAME)
-                        @errors << "Provided XML Document has an invalid root: #{root.name}" unless valid
-                        valid
-                      end
-    end
-
-    def single_eservice_result?
-      @single_eservice_result ||= begin
-                                    valid = (eservice_results_element.length == 1 && eservice_count == 1)
-                                    @errors << 'More than 1 eService Results were found' unless valid
-                                    valid
-                                  end
-    end
-
-    # @return [String] user-defined login ID
-    def id
-      single_textual_value_of_type_from_root 'CPID'
-    end
-
-    def user_account_type
-      single_textual_value_of_type_from_root 'CPAccType'
-    end
-
-    # @return [String] user NRIC/FIN or CorpPass generated internal ID if user does not have a NRIC/FIN
-    def user_id
-      single_textual_value_of_type_from_root 'CPUID'
-    end
-    alias to_s user_id
-
-    def user_id_country
-      single_textual_value_of_type_from_root 'CPUID_Country'
-    end
-
-    def user_id_date
-      Date.parse(single_textual_value_of_type_from_root('CPUID_DATE'))
-    end
-
-    def entity_id
-      single_textual_value_of_type_from_root('CPEntID')
-    end
-
-    def entity_status
-      single_textual_value_of_type_from_root('CPEnt_Status')
-    end
-
-    def entity_type
-      single_textual_value_of_type_from_root('CPEnt_TYPE')
+      valid = (document.root.name == CorpPass::Response::AUTH_ACCESS_NAME)
+      @errors << "Provided XML Document has an invalid root: #{document.root.name}" unless valid
+      valid
     end
 
     def valid_entity_status?
-      @valid_entity_status ||= begin
-                                 valid = %w(Active Suspend Terminate).include?(entity_status)
-                                 @errors << "Invalid Entity Status #{entity_status}" unless valid
-                                 valid
-                               end
+      valid = %w(Active Suspend Terminate).include?(entity_status)
+      @errors << "Invalid Entity Status #{entity_status}" unless valid
+      valid
     end
 
-    # @return [Boolean] whether this {User} is also a SingPass holder
-    def sp_holder?
-      is_sp_holder = single_textual_value_of_type_from_root('ISSPHOLDER')
-      CorpPass::Util.string_to_boolean(is_sp_holder, true_string: 'yes', false_string: 'no')
-    end
-
-    def eservice_count
-      single_textual_value_of_type('ESrvc_Row_Count', result_set).to_i
-    end
-
-    def eservice_result
-      eservice_results.first
-    end
-
-    def ==(other)
-      other.class == self.class && other.state == state
-    end
-    alias eql? ==
-
-    protected
-
-    def state
-      [auth_access]
-    end
-
-    private
-
-    def single_textual_value_of_type_from_root(name)
-      single_textual_value_of_type(name, root)
-    end
-
-    def single_textual_value_of_type(name, base)
-      nodes = base.xpath("./#{name}/child::text()")
-      if nodes.empty?
-        nil
-      else
-        nodes.first.text
-      end
-    end
-
-    def result_set
-      root.xpath('./Result_Set[1]')
-    end
-
-    def eservice_results_element
-      result_set.xpath('./ESrvc_Result')
-    end
-
-    def eservice_results
-      @eservice_results ||= eservice_results_element.map do |result|
-        auth_result_set_element = result.xpath('./Auth_Result_Set')
-        row_count = auth_result_set_count(auth_result_set_element)
-        rows = auth_result_set_element.xpath('./Row')
-        unless row_count == rows.length
-          @errors << "#{row_count} <Auth_Result_Set> rows was declared, but #{rows.length} found"
+    # Sanity check: checks whether the given <Row_Count> for each e-service Auth_Result_Set
+    # matches length of parsed output
+    def valid_eservice_results?
+      valid = eservices.map do |svc|
+        valid_row_count = svc.auths.length == svc.given_auth_count
+        unless valid_row_count
+          @errors << "#{svc.given_auth_count} <Auth_Result_Set> rows was declared, but #{svc.auths.length} found"
         end
-        {
-          eservice_id: single_textual_value_of_type('CPESrvcID', result),
-          auth_result_set: auth_result_set(rows)
-        }
-      end
-    end
+        valid_row_count
+      end.all?
 
-    def auth_result_set_count(base)
-      single_textual_value_of_type('Row_Count', base).to_i
-    end
-
-    def auth_result_set(rows)
-      rows.map do |row|
-        parameters = row.xpath('./Parameter') || []
-        {
-          entity_id_sub:  single_textual_value_of_type('CPEntID_SUB', row),
-          role:  single_textual_value_of_type('CPRole', row),
-          start_date: Date.parse(single_textual_value_of_type('StartDate', row)),
-          end_date: Date.parse(single_textual_value_of_type('EndDate', row)),
-          parameters:  parameters.map do |parameter|
-                         name = parameter.xpath('./@name')
-                         name = name.text unless name.nil?
-                         {
-                           name: name,
-                           value: parameter.xpath('./child::text()').text
-                         }
-                       end
-        }
-      end
+      valid
     end
   end
 end
