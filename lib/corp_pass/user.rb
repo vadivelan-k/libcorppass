@@ -34,6 +34,8 @@ module CorpPass
         has_many :auths, Auth, tag: 'Auth_Result_Set/Row'
       end
 
+      # This module defines the mapping from an AuthAccess XML fragment to a
+      # {CorpPass::User} object
       module User
         # Convenience method to return e-services associated with this +User+.
         #
@@ -45,7 +47,7 @@ module CorpPass
 
         # Convenience method to return auth info associated with a particular e-service ID for this +User+.
         #
-        # @param eservice_id the e-service ID to obtain auth info for this +User+
+        # @param eservice_id [String] the e-service ID to obtain auth info for this +User+
         #
         # @return [Array] An +Array+ of +AuthResult+ for the given +eservice_id+ associated with this +User+
         def auth_results_for(eservice_id)
@@ -93,6 +95,7 @@ module CorpPass
     attr_reader :auth_access
     attr_reader :errors
 
+    # @param auth_access [String]
     def initialize(auth_access = nil)
       @errors = []
 
@@ -107,7 +110,7 @@ module CorpPass
     end
     alias eql? ==
 
-    # Maps the `ISSPHOLDER` field with the mapping { YES => true, NO => false }
+    # Maps the <ISSPHOLDER> field with the mapping { 'yes' => true, 'no' => false }
     # @return [Boolean] Whether this {User} is also a SingPass holder
     def sp_holder?
       CorpPass::Util.string_to_boolean(@is_sp_holder_raw, true_string: 'yes', false_string: 'no')
@@ -164,6 +167,8 @@ module CorpPass
       true
     end
 
+    private
+
     # Returns whether the XML backing this +User+ has errors. Note that this method does not
     # validate the XML against the namespace defined in the specification due to inconsistencies
     # found between that and the actual XML response.
@@ -192,7 +197,7 @@ module CorpPass
     #
     # Also adds any errors found in the XML to the instance variable +@errors+.
     #
-    # @returns [Boolean]
+    # @return [Boolean]
     def valid_root?
       valid = (document.root.name == CorpPass::Response::AUTH_ACCESS_NAME)
       @errors << "Provided XML Document has an invalid root: #{document.root.name}" unless valid

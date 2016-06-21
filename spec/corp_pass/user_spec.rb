@@ -65,7 +65,7 @@ RSpec.describe CorpPass::User do
     context 'Valid document' do
       it { expect(subject.valid?).to be true }
       it { expect { subject.validate! }.to_not raise_error }
-      it { expect(subject.valid_root?).to be true }
+      it { expect(subject.send(:valid_root?)).to be true }
     end
 
     context 'Invalid document' do
@@ -80,7 +80,7 @@ RSpec.describe CorpPass::User do
 
       it 'validates badly formed XML documents properly' do
         invalid = described_class.new('<invalid>fail')
-        expect(invalid.xml_valid?).to be false
+        expect(invalid.send(:xml_valid?)).to be false
         expect(invalid.valid?).to be false
         expect(invalid.errors).to include('Invalid XML Document: Premature end of data in tag invalid line 1')
       end
@@ -88,7 +88,7 @@ RSpec.describe CorpPass::User do
       it 'validates invalid roots correctly' do
         invalid_root = '<?xml version="1.0" encoding="UTF-8"?> <invalid>fail</invalid>'
         invalid = described_class.new(invalid_root)
-        expect(invalid.valid_root?).to be false
+        expect(invalid.send(:valid_root?)).to be false
         expect(invalid.errors).to include('Provided XML Document has an invalid root: invalid')
         expect(invalid.valid?).to be false
       end
@@ -96,14 +96,14 @@ RSpec.describe CorpPass::User do
       it 'validates the XSD correctly' do
         invalid_root = '<?xml version="1.0" encoding="UTF-8"?> <invalid>fail</invalid>'
         invalid = described_class.new(invalid_root)
-        expect(invalid.xsd_valid?).to be false
+        expect(invalid.send(:xsd_valid?)).to be false
         expect(invalid.valid?).to be false
         expect(invalid.errors).to include("XSD Validation failed: Element 'invalid': "\
                                           'No matching global declaration available for the validation root.')
       end
 
       it 'validates entity status correctly' do
-        expect(@invalid_user.valid_entity_status?).to be false
+        expect(@invalid_user.send(:valid_entity_status?)).to be false
         expect(@invalid_user.errors).to include('Invalid Entity Status MIA')
       end
 

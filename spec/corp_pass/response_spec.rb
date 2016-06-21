@@ -28,7 +28,6 @@ RSpec.describe CorpPass::Response do
     it { expect(subject.subject).to be_a(Saml::Elements::Subject) }
     it { expect(subject.name_id).to eq('S1234567A') }
     it { expect { subject.auth_access }.to_not raise_error }
-    it { expect(subject.third_party?).to be false }
     it { expect { subject.cp_user }.to_not raise_error }
     it 'decrypts the assertion successfully' do
       expect(subject.saml_response.encrypted_assertions).to be_empty

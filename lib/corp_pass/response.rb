@@ -6,7 +6,11 @@ require 'corp_pass/user'
 module CorpPass
   class MissingAssertionError < CorpPass::Error; end
 
-  # The purpose of this class is to retrieve the Subject and User/Third Party Authorization XML Values
+  # Class representing a SAML response obtained after authentication
+  #
+  # @attr saml_response [String] The SAML response XML backing this object
+  # @attr errors [Array<String>] A list of CorpPass-specific validation errors.
+  #                              Responses are validated on initialization.
   class Response
     include CorpPass::Notification
 
@@ -19,6 +23,15 @@ module CorpPass
     attr_reader :saml_response
     attr_reader :errors
 
+    delegate :attribute_statement, to: :assertion
+    delegate :authn_statement, to: :assertion
+    delegate :subject, to: :assertion
+    delegate :attributes, to: :attribute_statement
+    delegate :assertions, to: :saml_response
+    delegate :to_s, to: :saml_response
+    delegate :to_xml, to: :saml_response
+
+    # @param saml_response [String] The SAML response XML as a String.
     def initialize(saml_response)
       @saml_response = saml_response
       @errors = []
@@ -26,10 +39,14 @@ module CorpPass
       validate
     end
 
+    # Whether this {Response} has any errors. This method does not perform validations.
+    # Validations are performed on initialization.
+    # @return [Boolean]
     def valid?
       errors.empty?
     end
 
+    # @return [Boolean]
     def success?
       @success ||= begin
                      success = saml_response.success?
@@ -38,16 +55,11 @@ module CorpPass
                    end
     end
 
-    delegate :assertions, to: :saml_response
-
+    # Returns the assertion associated with the SAML response
     def assertion
       # Already validated that there is only have one assertion in the SAML response
       assertions.first
     end
-
-    delegate :attribute_statement, to: :assertion
-
-    delegate :subject, to: :assertion
 
     # Not sure if CorpPass is going to return anything to us here.
     # Leaving it here for now
@@ -55,25 +67,17 @@ module CorpPass
       @name_id ||= (subject._name_id.try(:value) || decrypt_encrypted_id.try(:name_id).try(:value))
     end
 
-    delegate :attributes, to: :attribute_statement
-
+    # Decodes and returns the decoded <AuthAccess> field in the SAML response
+    # @return [String]
     def auth_access
       Base64.decode64(attributes.first.attribute_values.first.content)
     end
 
-    def third_party?
-      attributes.length > 1
-    end
-
+    # Creates and returns the {CorpPass::User} for this SAML response.
+    # @return {CorpPass::User}
     def cp_user
       @cp_user ||= CorpPass::User.new(auth_access)
     end
-
-    delegate :to_xml, to: :saml_response
-
-    delegate :to_s, to: :saml_response
-
-    delegate :authn_statement, to: :assertion
 
     def authn_context_class_refs
       authn_statement.map do |statement|
