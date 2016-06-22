@@ -136,14 +136,14 @@ module CorpPass
       def authenticate!
         response = resolve_artifact!(request)
         user = response.cp_user
-        notify(CorpPass::Events::AUTH_ACCESS, user.auth_access)
+        notify(CorpPass::Events::AUTH_ACCESS, user.xml)
         begin
           user.validate!
         rescue CorpPass::InvalidUser => e
           notify(CorpPass::Events::INVALID_USER, "User XML validation failed: #{e}\nXML Received was:\n#{e.xml}")
           CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
         end
-        notify(CorpPass::Events::LOGIN_SUCCESS, "Logged in successfully #{user.user_id}")
+        notify(CorpPass::Events::LOGIN_SUCCESS, "Logged in successfully #{user.info.id}")
         success! user
       end
 

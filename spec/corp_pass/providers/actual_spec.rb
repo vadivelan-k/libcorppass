@@ -256,7 +256,7 @@ RSpec.describe CorpPass::Providers::Actual do
                       request = Rack::Request.new(env)
                       if request[:SAMLRequest] # IdP initiated SLO
                         logout_request = CorpPass.parse_logout_request request
-                        if logout_request.name_id == env['warden'].user.user_id
+                        if logout_request.name_id == env['warden'].user.info.id
                           CorpPass.logout(env['warden'])
                           slo_url, _logout_response = CorpPass.slo_response_redirect(logout_request)
                           response = Rack::Response.new
@@ -275,7 +275,7 @@ RSpec.describe CorpPass::Providers::Actual do
                           CorpPass::Test::RackHelper::FAILURE_RESPONSE
                         end
                       else # Start SP initiated SLO
-                        url, logout_request = CorpPass.slo_request_redirect(env['warden'].user.user_id)
+                        url, logout_request = CorpPass.slo_request_redirect(env['warden'].user.info.id)
                         env['rack.session']['logout_id'] = logout_request._id
                         response = Rack::Response.new
                         response.redirect(url)
@@ -361,7 +361,7 @@ RSpec.describe CorpPass::Providers::Actual do
 
       destination = @sp.single_logout_service_url(Saml::ProtocolBinding::HTTP_REDIRECT)
       logout_request = Saml::LogoutRequest.new destination: destination,
-                                               name_id: user.user_id,
+                                               name_id: user.info.id,
                                                issuer: @idp_entity
       request_url = ::URI.parse(Saml::Bindings::HTTPRedirect.create_url(logout_request))
       env = env_with_params('/slo', CGI.parse(request_url.query))

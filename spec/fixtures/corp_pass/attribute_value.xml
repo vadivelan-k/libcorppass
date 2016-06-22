@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AttributeValue>
+  <AuthAccess>
+    <Result_Set>
+      <ESrvc_Row_Count>1</ESrvc_Row_Count>
+      <ESrvc_Result>
+        <CPESrvcID>Foobar</CPESrvcID>
+        <Auth_Result_Set>
+          <Row_Count>2</Row_Count>
+          <Row>
+            <CPEntID_SUB>NULL</CPEntID_SUB>
+            <CPRole>Acceptor</CPRole>
+            <StartDate>2016-01-15</StartDate>
+            <EndDate>2016-02-15</EndDate>
+          </Row>
+          <Row>
+            <CPEntID_SUB>foobar</CPEntID_SUB>
+            <CPRole>Viewer</CPRole>
+            <StartDate>2015-01-15</StartDate>
+            <EndDate>2017-02-15</EndDate>
+            <Parameter name="foo">bar</Parameter>
+            <Parameter name="lorem">ipsum</Parameter>
+          </Row>
+        </Auth_Result_Set>
+      </ESrvc_Result>
+    </Result_Set>
+  </AuthAccess>
+  <UserInfo>
+    <CPAccType>User</CPAccType>
+    <CPUID>S1234567A</CPUID>
+    <CPUID_Country>SG</CPUID_Country>
+    <CPUID_FullName>Nelson Tan</CPUID_FullName>
+    <CPSystemUID>CP192</CPSystemUID>
+    <ISSPHOLDER>YES</ISSPHOLDER>
+    <CPEntID>201000758R</CPEntID>
+    <CPEnt_Status>Active</CPEnt_Status>
+    <CPEnt_TYPE>UEN</CPEnt_TYPE>
+    <CPNonUEN_RegNo>NULL</CPNonUEN_RegNo>
+    <CPNonUEN_Country>NULL</CPNonUEN_Country>
+    <CPNonUEN_Name>NULL</CPNonUEN_Name>
+  </UserInfo>
+</AttributeValue>

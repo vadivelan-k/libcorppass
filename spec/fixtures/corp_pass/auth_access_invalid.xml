@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AuthAccess>
-  <CPID>cptest4</CPID>
-  <CPAccType>User</CPAccType>
-  <CPUID>F1234567P</CPUID>
-  <CPUID_Country>SG</CPUID_Country>
-  <CPUID_DATE>2011-01-15</CPUID_DATE>
-  <CPEntID>R90SS0001A</CPEntID>
-  <CPEnt_Status>MIA</CPEnt_Status>
-  <CPEnt_TYPE>UEN</CPEnt_TYPE>
-  <ISSPHOLDER>YES</ISSPHOLDER>
   <Result_Set>
     <ESrvc_Row_Count>3</ESrvc_Row_Count>
     <ESrvc_Result>

@@ -15,37 +15,42 @@ RSpec.describe CorpPass::User do
     expect(deserialized).to eq(user)
   end
 
-  it { expect(subject.auth_access).to eq(File.read('spec/fixtures/corp_pass/auth_access.xml')) }
-  it { expect(subject.id).to eq('foobar') }
-  it { expect(subject.user_account_type).to eq('User') }
-  it { expect(subject.user_id).to eq('S1234567A') }
-  it { expect(subject.user_id_country).to eq('SG') }
-  it { expect(subject.user_id_date).to eq(Date.new(2011, 1, 15)) }
-  it { expect(subject.entity_id).to eq('201000758R') }
-  it { expect(subject.entity_status).to eq('Active') }
-  it { expect(subject.entity_type).to eq('UEN') }
-  it { expect(subject.sp_holder?).to be true }
+  it { expect(subject.xml).to eq(File.read('spec/fixtures/corp_pass/attribute_value.xml')) }
+  it { expect(subject.info.account_type).to eq('User') }
+  it { expect(subject.info.id).to eq('S1234567A') }
+  it { expect(subject.info.country).to eq('SG') }
+  it { expect(subject.info.entity_id).to eq('201000758R') }
+  it { expect(subject.info.entity_status).to eq('Active') }
+  it { expect(subject.info.entity_type).to eq('UEN') }
+  it { expect(subject.info.sp_holder?).to be true }
   it { expect(subject.given_eservices_count).to be 1 }
+  it { expect(subject.info.full_name).to eq('Nelson Tan') }
+  it { expect(subject.info.system_user_id).to eq('CP192') }
+  it { expect(subject.info.non_uen_reg_no).to eq('NULL') }
+  it { expect(subject.info.non_uen_country).to eq('NULL') }
+  it { expect(subject.info.non_uen_name).to eq('NULL') }
 
   it 'should return the correct set of eservice_result' do
     foobar_service = subject.eservices[0]
+    expect(foobar_service.id).to eq 'Foobar'
+    expect(foobar_service.given_auth_count).to eq 2
     expect(foobar_service.auths.length).to eq 2
+
     expect(foobar_service.auths[0].start_date).to eq Date.new(2016, 1, 15)
     expect(foobar_service.auths[0].end_date).to eq Date.new(2016, 2, 15)
-    expect(foobar_service.auths[0].entity_id_sub).to eq nil
+    expect(foobar_service.auths[0].entity_id_sub).to eq 'NULL'
     expect(foobar_service.auths[0].role).to eq 'Acceptor'
-    expect(foobar_service.auths[0].parameters.length).to eq 2
-    expect(foobar_service.auths[0].parameters[0].name).to eq 'foo'
-    expect(foobar_service.auths[0].parameters[0].value).to eq 'bar'
-    expect(foobar_service.auths[0].parameters[1].name).to eq 'lorem'
-    expect(foobar_service.auths[0].parameters[1].value).to eq 'ipsum'
+    expect(foobar_service.auths[0].parameters.length).to eq 0
 
-    expect(foobar_service.auths.length).to eq 2
     expect(foobar_service.auths[1].start_date).to eq Date.new(2015, 1, 15)
     expect(foobar_service.auths[1].end_date).to eq Date.new(2017, 2, 15)
     expect(foobar_service.auths[1].entity_id_sub).to eq 'foobar'
     expect(foobar_service.auths[1].role).to eq 'Viewer'
-    expect(foobar_service.auths[1].parameters.length).to eq 0
+    expect(foobar_service.auths[1].parameters.length).to eq 2
+    expect(foobar_service.auths[1].parameters[0].name).to eq 'foo'
+    expect(foobar_service.auths[1].parameters[0].value).to eq 'bar'
+    expect(foobar_service.auths[1].parameters[1].name).to eq 'lorem'
+    expect(foobar_service.auths[1].parameters[1].value).to eq 'ipsum'
   end
 
   it 'should return eservices as a Hash' do

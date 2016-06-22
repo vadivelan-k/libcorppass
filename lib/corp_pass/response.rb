@@ -14,6 +14,8 @@ module CorpPass
   class Response
     include CorpPass::Notification
 
+    ATTRIBUTE_VALUE_NAME = 'AttributeValue'.freeze
+    USER_INFO_NAME = 'UserInfo'.freeze
     AUTH_ACCESS_NAME = 'AuthAccess'.freeze
     TP_AUTH_ACCESS_NAME = 'TPAuthAccess'.freeze
 
@@ -68,12 +70,15 @@ module CorpPass
     end
 
     # Decodes and returns the decoded <AuthAccess> field in the SAML response
+    # The return result is wrapped in an <AttributeValue>
+    #
     # @return [String]
     def auth_access
-      Base64.decode64(attributes.first.attribute_values.first.content)
+      "<AttributeValue>#{Base64.decode64(attributes.first.attribute_values.first.content)}</AttributeValue>"
     end
 
     # Creates and returns the {CorpPass::User} for this SAML response.
+    #
     # @return {CorpPass::User}
     def cp_user
       @cp_user ||= CorpPass::User.new(auth_access)
