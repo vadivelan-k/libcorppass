@@ -29,6 +29,7 @@ RSpec.describe CorpPass::User do
   it { expect(subject.info.non_uen_reg_no).to eq('NULL') }
   it { expect(subject.info.non_uen_country).to eq('NULL') }
   it { expect(subject.info.non_uen_name).to eq('NULL') }
+  it { expect(subject.twofa?).to eq(false) }
 
   it 'should return the correct set of eservice_result' do
     foobar_service = subject.eservices[0]

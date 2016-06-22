@@ -12,6 +12,6 @@ FactoryGirl.define do
       end
     end
 
-    initialize_with { new File.read(xml_path) }
+    initialize_with { new File.read(xml_path), twofa: false }
   end
 end

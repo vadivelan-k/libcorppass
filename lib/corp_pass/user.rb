@@ -119,11 +119,13 @@ module CorpPass
     attr_reader :errors
 
     # @param xml [String]
-    def initialize(xml = nil)
-      @errors = []
-
+    def initialize(xml = nil, options = {})
+      # XmlMapper creates objects with the same constructor so we need this check here
+      # `xml` is `nil` when XmlMapper does its magic
       if !xml.nil?
+        @errors = []
         @xml = xml
+        @twofa = options[:twofa]
         parse(xml) if xml_valid?
       end
     end
@@ -132,6 +134,12 @@ module CorpPass
       other.class == self.class && other.xml == xml
     end
     alias eql? ==
+
+    # Returns whether this {User} was authenticated with 2FA.
+    # @return [Boolean]
+    def twofa? # rubocop:disable Style/TrivialAccessors # Can't have `?` in accessors
+      @twofa
+    end
 
     # Returns the +Nokogiri::XML+ document backing this {User}. The document is memoized.
     # @return [Nokogiri::XML]

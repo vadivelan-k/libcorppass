@@ -69,11 +69,10 @@ module CorpPass
       @name_id ||= (subject._name_id.try(:value) || decrypt_encrypted_id.try(:name_id).try(:value))
     end
 
-    # Decodes and returns the decoded <AuthAccess> field in the SAML response
-    # The return result is wrapped in an <AttributeValue>
+    # Decodes and returns the decoded <AttributeValue> field in the SAML response
     #
     # @return [String]
-    def auth_access
+    def attribute_value
       "<AttributeValue>#{Base64.decode64(attributes.first.attribute_values.first.content)}</AttributeValue>"
     end
 
@@ -81,7 +80,7 @@ module CorpPass
     #
     # @return {CorpPass::User}
     def cp_user
-      @cp_user ||= CorpPass::User.new(auth_access)
+      @cp_user ||= CorpPass::User.new(attribute_value, twofa: twofa?)
     end
 
     def authn_context_class_refs
