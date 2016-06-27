@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name          = 'libcorppass'
   spec.version       = CorpPass::VERSION
   spec.authors       = ['Yong Wen Chua', 'Guoyou Ng']
-  spec.email         = ['chua_yong_wen@ida.gov.sg', 'ng_guoyou@ida,gov,sg']
+  spec.email         = ['chua_yong_wen@ida.gov.sg', 'ng_guoyou@ida.gov.sg']
   spec.licenses      = ['LGPL']
 
   spec.summary       = 'A library to perform authentication with CorpPass for Ruby on Rails application'
