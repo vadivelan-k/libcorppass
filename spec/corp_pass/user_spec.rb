@@ -9,9 +9,7 @@ RSpec.describe CorpPass::User do
   it 'should serialize and deserialize properly' do
     user = create(:corp_pass_user)
     serialized = user.serialize
-
-    deserialized = CorpPass::User.deserialize serialized
-
+    deserialized = CorpPass::User.deserialize(serialized)
     expect(deserialized).to eq(user)
   end
 
