@@ -4,6 +4,7 @@ FactoryGirl.define do
 
     transient do
       xml_path 'spec/fixtures/corp_pass/saml_response.xml'
+      has_attribute true
     end
 
     trait :invalid do
@@ -15,10 +16,20 @@ FactoryGirl.define do
     trait :no_assertion do
       transient do
         xml_path 'spec/fixtures/corp_pass/saml_response_no_assertion.xml'
+        has_attribute false
       end
     end
 
     initialize_with { Saml::Response.parse File.read(xml_path) }
+
+    after(:build) do |response, evaluator|
+      if evaluator.has_attribute
+        user = FactoryGirl.create(:corp_pass_user)
+        user_xml = user.document.children[0].children.map(&:to_xml).join('')
+        response.assertions.first.attribute_statement.attributes.first.attribute_values.first.content =
+          Base64.encode64(user_xml)
+      end
+    end
 
     trait :encrypt_id do
       after(:build) do |response|

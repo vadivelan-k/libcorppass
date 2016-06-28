@@ -18,7 +18,7 @@ RSpec.describe CorpPass::User do
   it { expect(subject.info.id).to eq('S1234567A') }
   it { expect(subject.info.country).to eq('SG') }
   it { expect(subject.info.entity_id).to eq('201000758R') }
-  it { expect(subject.info.entity_status).to eq('Active') }
+  it { expect(subject.info.entity_status).to eq('Registered') }
   it { expect(subject.info.entity_type).to eq('UEN') }
   it { expect(subject.info.sp_holder?).to be true }
   it { expect(subject.given_eservices_count).to be 1 }
