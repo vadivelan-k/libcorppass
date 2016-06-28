@@ -236,7 +236,7 @@ module CorpPass
     #
     # @return [Boolean]
     def valid_entity_status?
-      valid = %w(Active Suspend Terminate Registered De-Registered Withdrawn).include?(info.entity_status)
+      valid = %w(Registered De-Registered Withdrawn).include?(info.entity_status)
       @errors << "Invalid Entity Status #{info.entity_status}" unless valid
       valid
     end
