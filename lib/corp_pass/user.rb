@@ -155,16 +155,18 @@ module CorpPass
     end
 
     # Returns the XML document backing this {User}.
-    # @return [Array<String>]
+    # @return [Array<String>] An array of [xml, twofa?] representing the serialized user
     def serialize
-      [xml]
+      [xml, twofa?]
     end
 
     # Deserializes a {User} from an XML document.
-    # @param dumped_array [Array<String>] an +Array+ with the serialized {User} as the first element.
+    # @param dumped_array [Array] an +Array+ with the serialized {User} as the first element
+    #                             and whether the user was authenticated with 2FA as the second element.
     def self.deserialize(dumped_array)
       xml = dumped_array[0]
-      new(xml)
+      twofa = dumped_array[1]
+      new(xml, twofa: twofa)
     end
 
     # Checks whether this user is backed by a valid XML
