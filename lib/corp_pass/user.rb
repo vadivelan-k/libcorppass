@@ -5,6 +5,29 @@ require 'corp_pass/util'
 
 module CorpPass
   module Mapping
+    class UserInfo
+      include XmlMapper
+
+      element :id, String, tag: 'CPUID'
+      element :account_type, String, tag: 'CPAccType'
+      element :country, String, tag: 'CPUID_Country'
+      element :full_name, String, tag: 'CPUID_FullName'
+      element :system_user_id, String, tag: 'CPSystemUID'
+      element :entity_id, String, tag: 'CPEntID'
+      element :entity_status, String, tag: 'CPEnt_Status'
+      element :entity_type, String, tag: 'CPEnt_TYPE'
+      element :is_sp_holder_raw, String, tag: 'ISSPHOLDER'
+      element :non_uen_reg_no, String, tag: 'CPNonUEN_RegNo'
+      element :non_uen_country, String, tag: 'CPNonUEN_Country'
+      element :non_uen_name, String, tag: 'CPNonUEN_Name'
+
+      # Maps the <ISSPHOLDER> field with the mapping { 'yes' => true, 'no' => false }
+      # @return [Boolean] Whether this {User} is also a SingPass holder
+      def sp_holder?
+        CorpPass::Util.string_to_boolean(@is_sp_holder_raw, true_string: 'yes', false_string: 'no')
+      end
+    end
+
     module AuthAccess
       class AuthParameter
         include XmlMapper
@@ -34,40 +57,40 @@ module CorpPass
         has_many :auths, Auth, tag: 'Auth_Result_Set/Row'
       end
 
-      # This module defines the mapping from an AuthAccess XML fragment to a
-      # {CorpPass::User} object
-      module User
-        # Convenience method to return e-services associated with this +User+.
-        #
-        # @return [Hash] All e-services as a +Hash+ with e-service ID
-        #                as the key and e-service details as the value
-        def eservices_to_h
-          Hash[@eservices.map { |eservice| [eservice.id, eservice] }]
-        end
+      class AuthAccess
+        include XmlMapper
 
-        # Convenience method to return auth info associated with a particular e-service ID for this +User+.
-        #
-        # @param eservice_id [String] the e-service ID to obtain auth info for this +User+
-        #
-        # @return [Array] An +Array+ of +AuthResult+ for the given +eservice_id+ associated with this +User+
-        def auth_results_for(eservice_id)
-          eservices_to_h[eservice_id].auths
-        end
+        tag 'AuthAccess'
+        element :given_eservices_count, Integer, tag: 'Result_Set/ESrvc_Row_Count'
+        has_many :eservices, EService, tag: 'Result_Set/ESrvc_Result'
+      end
+    end
 
-        def self.included(u)
-          u.tag 'AuthAccess'
-          u.element :id, String, tag: 'CPID'
-          u.element :user_account_type, String, tag: 'CPAccType'
-          u.element :user_id, String, tag: 'CPUID'
-          u.element :user_id_country, String, tag: 'CPUID_Country'
-          u.element :user_id_date, Date, tag: 'CPUID_DATE'
-          u.element :entity_id, String, tag: 'CPEntID'
-          u.element :entity_status, String, tag: 'CPEnt_Status'
-          u.element :entity_type, String, tag: 'CPEnt_TYPE'
-          u.element :is_sp_holder_raw, String, tag: 'ISSPHOLDER'
-          u.element :given_eservices_count, Integer, tag: 'Result_Set/ESrvc_Row_Count'
-          u.has_many :eservices, EService, tag: 'Result_Set/ESrvc_Result'
-        end
+    # This module defines the mapping from an AuthAccess XML fragment to a
+    # {CorpPass::User} object
+    module User
+      def self.included(u)
+        u.tag 'AttributeValue'
+        u.element :given_eservices_count, Integer, tag: 'AuthAccess/Result_Set/ESrvc_Row_Count'
+        u.has_many :eservices, AuthAccess::EService, tag: 'AuthAccess/Result_Set/ESrvc_Result'
+        u.element :info, UserInfo, tag: 'UserInfo'
+      end
+
+      # Convenience method to return e-services associated with this +User+.
+      #
+      # @return [Hash] All e-services as a +Hash+ with e-service ID
+      #                as the key and e-service details as the value
+      def eservices_to_h
+        Hash[@eservices.map { |eservice| [eservice.id, eservice] }]
+      end
+
+      # Convenience method to return auth info associated with a particular e-service ID for this +User+.
+      #
+      # @param eservice_id [String] the e-service ID to obtain auth info for this +User+
+      #
+      # @return [Array] An +Array+ of +AuthResult+ for the given +eservice_id+ associated with this +User+
+      def auth_results_for(eservice_id)
+        eservices_to_h[eservice_id].auths
       end
     end
   end
@@ -89,50 +112,52 @@ module CorpPass
 
   class User
     include XmlMapper
-    include CorpPass::Mapping::AuthAccess::User
+    include CorpPass::Mapping::User
     include CorpPass::Notification
 
-    attr_reader :auth_access
+    attr_reader :xml
     attr_reader :errors
 
-    # @param auth_access [String]
-    def initialize(auth_access = nil)
-      @errors = []
-
-      if !auth_access.nil?
-        @auth_access = auth_access
-        parse(auth_access) if xml_valid?
+    # @param xml [String]
+    def initialize(xml = nil, options = {})
+      # XmlMapper creates objects with the same constructor so we need this check here
+      # `xml` is `nil` when XmlMapper does its magic
+      if !xml.nil?
+        @errors = []
+        @xml = xml
+        @twofa = options[:twofa]
+        parse(xml) if xml_valid?
       end
     end
 
     def ==(other)
-      other.class == self.class && other.auth_access == auth_access
+      other.class == self.class && other.xml == xml
     end
     alias eql? ==
 
-    # Maps the <ISSPHOLDER> field with the mapping { 'yes' => true, 'no' => false }
-    # @return [Boolean] Whether this {User} is also a SingPass holder
-    def sp_holder?
-      CorpPass::Util.string_to_boolean(@is_sp_holder_raw, true_string: 'yes', false_string: 'no')
+    # Returns whether this {User} was authenticated with 2FA.
+    # @return [Boolean]
+    def twofa? # rubocop:disable Style/TrivialAccessors # Can't have `?` in accessors
+      @twofa
     end
 
     # Returns the +Nokogiri::XML+ document backing this {User}. The document is memoized.
     # @return [Nokogiri::XML]
     def document
-      @document ||= Nokogiri::XML(auth_access)
+      @document ||= Nokogiri::XML(xml)
     end
 
     # Returns the +Nokogiri::XML::Schema+ backing the user. The XSD is memoized.
     # @return [Nokogiri::XML::Schema]
     def xsd
       # File I/O considered expensive
-      @xsd_memo ||= Nokogiri::XML::Schema(File.read(File.dirname(__FILE__) + '/AuthAccess.xsd'))
+      @xsd_memo ||= Nokogiri::XML::Schema(File.read(File.join(File.dirname(__FILE__), 'xml', 'AttributeValue.xsd')))
     end
 
     # Returns the XML document backing this {User}.
     # @return [Array<String>]
     def serialize
-      [auth_access]
+      [xml]
     end
 
     # Deserializes a {User} from an XML document.
@@ -162,7 +187,7 @@ module CorpPass
       unless valid?
         # Disabling the cop because they cannot make up their mind on this!
         # And `fail` does not allow for extra parameters
-        raise CorpPass::InvalidUser.new(@errors.join('; '), auth_access) # rubocop:disable Style/SignalException
+        raise CorpPass::InvalidUser.new(@errors.join('; '), xml) # rubocop:disable Style/SignalException
       end
       true
     end
@@ -199,14 +224,19 @@ module CorpPass
     #
     # @return [Boolean]
     def valid_root?
-      valid = (document.root.name == CorpPass::Response::AUTH_ACCESS_NAME)
+      valid = (document.root.name == CorpPass::Response::ATTRIBUTE_VALUE_NAME)
       @errors << "Provided XML Document has an invalid root: #{document.root.name}" unless valid
       valid
     end
 
+    # Returns whether the XML backing this +User+ has a valid entity status.
+    #
+    # Also adds any errors found in the XML to the instance variable +@errors+.
+    #
+    # @return [Boolean]
     def valid_entity_status?
-      valid = %w(Active Suspend Terminate).include?(entity_status)
-      @errors << "Invalid Entity Status #{entity_status}" unless valid
+      valid = %w(Active Suspend Terminate Registered De-Registered Withdrawn).include?(info.entity_status)
+      @errors << "Invalid Entity Status #{info.entity_status}" unless valid
       valid
     end
 

@@ -3,15 +3,15 @@ FactoryGirl.define do
     skip_create
 
     transient do
-      xml_path 'spec/fixtures/corp_pass/auth_access.xml'
+      xml_path 'spec/fixtures/corp_pass/attribute_value.xml'
     end
 
     trait :invalid do
       transient do
-        xml_path 'spec/fixtures/corp_pass/auth_access_invalid.xml'
+        xml_path 'spec/fixtures/corp_pass/attribute_value_invalid.xml'
       end
     end
 
-    initialize_with { new File.read(xml_path) }
+    initialize_with { new File.read(xml_path), twofa: false }
   end
 end
