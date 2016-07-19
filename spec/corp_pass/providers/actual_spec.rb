@@ -35,7 +35,7 @@ RSpec.describe CorpPass::Providers::Actual do
         expected_params << ['PartnerId', sp_entity]
         expected_params << %w(Target https://sp.example.com)
         expected_params << %w(NameIdFormat Email)
-        expected_params << %w(esrvcId Foobar)
+        expected_params << %w(esrvcID Foobar)
         # expected_params << %w(param1 NULL)
         # expected_params << %w(param2 NULL)
         actual_url = subject.sso_idp_initiated_url

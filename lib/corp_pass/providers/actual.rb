@@ -60,7 +60,7 @@ module CorpPass
                         ['PartnerId', configuration.sp_entity],
                         ['Target', configuration.sso_target],
                         %w(NameIdFormat Email),
-                        ['esrvcId', configuration.eservice_id]
+                        ['esrvcID', configuration.eservice_id]
                       ])
         # params << %w(param1 NULL)
         # params << %w(param2 NULL)
