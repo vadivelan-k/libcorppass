@@ -143,7 +143,7 @@ module CorpPass
           notify(CorpPass::Events::INVALID_USER, "User XML validation failed: #{e}\nXML Received was:\n#{e.xml}")
           CorpPass::Util.throw_exception(e, CorpPass::WARDEN_SCOPE)
         end
-        notify(CorpPass::Events::LOGIN_SUCCESS, "Logged in successfully #{user.info.id}")
+        notify(CorpPass::Events::LOGIN_SUCCESS, "Logged in successfully #{user.info.id} -- 2FA: #{user.twofa?}")
         success! user
       end
 
