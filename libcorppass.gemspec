@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'timecop', '~> 0.8'
   spec.add_development_dependency 'simplecov'
 
-  spec.add_dependency 'activesupport', '~> 4.2'
+  spec.add_dependency 'activesupport', '>= 4.2'
   spec.add_dependency 'libsaml', '~> 2.21', '>= 2.21.3'
   spec.add_dependency 'nokogiri', '~> 1.6', '>= 1.6.8'
   spec.add_dependency 'xmlmapper', '~>0.7.1'
