@@ -24,10 +24,9 @@ FactoryGirl.define do
 
     after(:build) do |response, evaluator|
       if evaluator.has_attribute
-        user = FactoryGirl.create(:corp_pass_user)
-        user_xml = user.document.children[0].children.map(&:to_xml).join('')
+        attribute_value = FactoryGirl.create(:attribute_value)
         response.assertions.first.attribute_statement.attributes.first.attribute_values.first.content =
-          Base64.encode64(user_xml)
+          Base64.encode64(attribute_value)
       end
     end
 
