@@ -1,4 +1,5 @@
 require 'xmldsig'
+require 'tempfile'
 
 RSpec.describe CorpPass::Metadata do
   subject { described_class }
