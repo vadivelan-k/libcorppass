@@ -1,5 +1,5 @@
 # libcorppass
-[![Build Status](https://travis-ci.org/idagds/libcorppass.svg?branch=master)](https://travis-ci.org/idagds/libcorppass)
+[![Build Status](https://travis-ci.org/govtechsg/libcorppass.svg?branch=master)](https://travis-ci.org/govtechsg/libcorppass)
 
 A wrapper around [libsaml](https://github.com/digidentity/libsaml) to perform authentication with CorpPass for Rack and Warden applications.
 
